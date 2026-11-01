@@ -559,7 +559,8 @@ function zeichne() {
   $("vergleich").textContent = Math.abs(diff) < 0.5 ? "Ausgangswerte." : `${eur(diff, true)} gegenüber den Ausgangswerten (${eur(PDF_STAND.endstand, true)}).`;
   const k = [];
   k.push(kennzahl("Projektkonto Ende 2042", eur(r.projektEnde, true), p.iab ? "ohne IAB-Vorteil von " + eur(r.iabSumme) : "IAB nicht berücksichtigt", klasse(r.projektEnde)));
-  k.push(kennzahl("Tiefster Stand Projektkonto", eur(r.tief.stand, true), "Jahresende " + r.tief.jahr + ", ohne IAB", klasse(r.tief.stand)));
+  const einsatz = Math.max(0, -r.tief.stand);
+  k.push(kennzahl("Höchster Kapitaleinsatz", eur(einsatz), einsatz > 0.5 ? "Jahresende " + r.tief.jahr + ", danach fließt es zurück" : "kein eigenes Geld gebunden"));
   k.push(kennzahl("Eigenkapital", eur(r.ek), `Darlehen ${eur(r.betrag)}`));
   k.push(kennzahl("Schwächstes Jahr je Monat", eur(r.schwach.ergebnis / 12, true), `${r.schwach.jahr}: ${eur(r.schwach.ergebnis, true)} im Jahr`, klasse(r.schwach.ergebnis)));
   k.push(kennzahl("Nach dem Darlehen je Monat", r.ueberschussMonat === null ? "–" : eur(r.ueberschussMonat, true), r.ueberschussMonat === null ? "Darlehen läuft bis zum Ende" : "Durchschnitt der Jahre ohne Rate", r.ueberschussMonat === null ? "" : klasse(r.ueberschussMonat)));
