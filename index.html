@@ -430,7 +430,7 @@ const STANDARD = {
   bedarf: 135000, ekNgn: false, ekErst: false, zusatz: 0, zins: 4.95, rateVoll: 1700, rateModus: "anteilig",
   quote: 74, ertrag: 100,
   kaufpreis: 132500, nd: 10, sonder: 40, methode: "linear", degSatz: 30,
-  steuer: 37.68,
+  steuer: 42,
   iab: true, herab: 50, ngn: 0, erst: 0, iabGesamt: 0, iabProjekt: 0
 };
 
@@ -593,7 +593,7 @@ function rechne(eingabe) {
 /*PERSONEN-START*/
 const PERSONEN = {
   a: { name: "Alexander Blumenstein", iabJahr: 2023, bescheid: "20.03.2026", steuer: 42, werte: null },
-  o: { name: "Oliver Mertins", iabJahr: 2024, bescheid: "07/2026", steuer: 37.68, werte: null }
+  o: { name: "Oliver Mertins", iabJahr: 2024, bescheid: "07/2026", steuer: 42, werte: null }
 };
 /*PERSONEN-ENDE*/
 const BASIS = Object.assign({}, STANDARD);
@@ -815,7 +815,7 @@ function zeichne() {
 function waehlePerson(k) {
   person = k;
   const P = PERSONEN[k];
-  // Steuersatz je Person: Alexander 42 % (Vorgabe 01.11.2026), Oliver 37,68 % (Grenzsteuersatz ESt 2024)
+  // Steuersatz je Person, derzeit bei beiden 42 % (Vorgabe 01.11.2026)
   Object.assign(STANDARD, BASIS, { steuer: P.steuer }, P.werte || {});
   PDF_STAND = rechne({});
   rateManuell = null;
