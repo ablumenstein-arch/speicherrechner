@@ -79,6 +79,7 @@ legend { font-family: var(--f-head); font-weight: 600; font-size: 15px; color: v
 input[aria-invalid="true"] { color: var(--neg); }
 .eingabe input:focus, .eingabe select:focus { outline: none; }
 .hinweis { font-size: 12.5px; color: var(--muted); }
+.rate-aktuell { font-size: 14px; font-weight: 600; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 6px 10px; }
 .schalter { display: flex; gap: 8px; align-items: center; font-size: 14px; }
 .schalter input { width: 16px; height: 16px; accent-color: var(--accent); }
 input[type="range"] { width: 100%; accent-color: var(--accent); }
@@ -169,9 +170,9 @@ footer { font-size: 12.5px; color: var(--muted); }
           <legend>Finanzierung</legend>
           <div class="feld"><label for="bedarf">Finanzierungsbedarf</label><span class="eingabe"><input id="bedarf" inputmode="decimal"><i>€</i></span></div>
           <div class="feld"><label for="zins">Sollzins</label><span class="eingabe"><input id="zins" inputmode="decimal"><i>%</i></span></div>
-          <div class="feld"><label for="rateVoll">Monatsrate bei vollem Darlehen</label><span class="eingabe"><input id="rateVoll" inputmode="decimal"><i>€</i></span></div>
+          <div class="feld"><label for="rateVoll">Rate laut Bankangebot, volles Darlehen</label><span class="eingabe"><input id="rateVoll" inputmode="decimal"><i>€</i></span></div>
           <div class="feld"><label for="rateModus">Rate bei Eigenkapital</label><span class="eingabe"><select id="rateModus"><option value="anteilig">sinkt anteilig</option><option value="fest">bleibt gleich</option></select></span></div>
-          <p class="hinweis" id="rateText"></p>
+          <p class="rate-aktuell" id="rateText"></p>
         </fieldset>
       </form>
 
@@ -541,7 +542,7 @@ function zeichne() {
   $("ekNgn").disabled = !p.iab; $("ekErst").disabled = !p.iab;
   $("ekText").textContent = `Eigenkapital gesamt ${eur(r.ek)} · Darlehen ${eur(r.betrag)} · Eigenkapitalquote ${quote.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`;
   $("rateText").textContent = r.betrag > 0
-    ? `Monatsrate ${r.rate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € · getilgt ${r.dl.ende ? String(r.dl.ende.m).padStart(2, "0") + "/" + r.dl.ende.y : "nach 2042"}`
+    ? `Ihre Monatsrate: ${r.rate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € · getilgt ${r.dl.ende ? String(r.dl.ende.m).padStart(2, "0") + "/" + r.dl.ende.y : "nach 2042"}`
     : "Kein Darlehen.";
   $("afaText").textContent = `AfA-Grundlage ${eur(r.afa.basis)}${r.afa.sonder > 0 ? ` · Sonder-AfA ${eur(r.afa.sonder)}` : ""}`;
   $("iabFelder").disabled = !p.iab;
