@@ -162,10 +162,20 @@ footer { font-size: 12.5px; color: var(--muted); }
 .person button small { font-weight: 400; font-size: 11.5px; }
 .person button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
 .person button[aria-pressed="true"]:hover { color: var(--panel); }
-.reiter { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
-.reiter button { font-family: var(--f-head); font-weight: 600; font-size: 15px; color: var(--muted); background: none; border: 0; border-radius: 0; padding: 9px 14px; border-bottom: 3px solid transparent; white-space: nowrap; }
-.reiter button:focus-visible { outline-offset: -3px; }
-.reiter button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.kacheln { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .kacheln { grid-template-columns: minmax(0, 1fr); } }
+.kachel { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; color: var(--ink); }
+.kachel:hover { border-color: var(--accent); color: var(--ink); }
+.kachel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.kachel[aria-selected="true"] { border: 2px solid var(--accent); background: var(--accent-soft); padding: 11px; }
+.kachel .ic { width: 40px; height: 40px; border-radius: 9px; background: var(--accent-soft); display: grid; place-items: center; }
+.kachel[aria-selected="true"] .ic { background: var(--accent); }
+.kachel .ic svg { width: 22px; height: 22px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.kachel[aria-selected="true"] .ic svg { stroke: var(--panel); }
+.kachel .t { display: block; font-family: var(--f-head); font-weight: 600; font-size: 16px; }
+.kachel .u { display: block; font-size: 12.5px; color: var(--muted); }
+.kachel .anzahl { font-size: 12px; font-weight: 600; background: var(--gold); color: var(--panel); border-radius: 99px; padding: 2px 8px; white-space: nowrap; }
 .stapel { display: grid; gap: 20px; min-width: 0; }
 .kennzahlen.vier { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 @media (max-width: 720px) { .kennzahlen.vier { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -213,10 +223,19 @@ a.oeffnen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px;
     </div>
   </div>
 
-  <nav class="reiter" role="tablist" aria-label="Bereiche">
-    <button type="button" role="tab" id="tabRechner" aria-selected="true" aria-controls="pRechner">Rechner</button>
-    <button type="button" role="tab" id="tabProjekt" aria-selected="false" aria-controls="pProjekt">Projekt</button>
-    <button type="button" role="tab" id="tabUnterlagen" aria-selected="false" aria-controls="pUnterlagen">Unterlagen</button>
+  <nav class="kacheln" role="tablist" aria-label="Bereiche">
+    <button type="button" class="kachel" role="tab" id="tabRechner" aria-selected="true" aria-controls="pRechner">
+      <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h2M12 18h4"/></svg></span>
+      <span><span class="t">Rechner</span><span class="u">Ergebnis, Konto, Steuer, Diagramme</span></span><span></span>
+    </button>
+    <button type="button" class="kachel" role="tab" id="tabProjekt" aria-selected="false" aria-controls="pProjekt">
+      <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 3V1.5h4V3M9 9h6M9 13h6M9 17h6"/></svg></span>
+      <span><span class="t">Projekt</span><span class="u">Standort, Technik, Garantien, Ablauf</span></span><span></span>
+    </button>
+    <button type="button" class="kachel" role="tab" id="tabUnterlagen" aria-selected="false" aria-controls="pUnterlagen">
+      <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4M9 12h6M9 16h6"/></svg></span>
+      <span><span class="t">Unterlagen</span><span class="u">Datenblatt, Verträge, Berechnung</span></span><span class="anzahl" id="dokAnzahl">8 Dokumente</span>
+    </button>
   </nav>
 
   <section id="pRechner" role="tabpanel" aria-labelledby="tabRechner">
@@ -969,6 +988,8 @@ function waehlePerson(k) {
   document.querySelectorAll(".iabJahr").forEach(el => { el.textContent = P.iabJahr; });
   document.querySelectorAll("[data-person]").forEach(b => b.setAttribute("aria-pressed", b.dataset.person === k ? "true" : "false"));
   document.querySelectorAll("[data-nur]").forEach(el => { el.hidden = el.dataset.nur !== k; });
+  const dok = [...document.querySelectorAll("#pUnterlagen .dok")].filter(d => !d.closest("[data-nur]") || d.closest("[data-nur]").dataset.nur === k).length;
+  $("dokAnzahl").textContent = dok + " Dokumente";
   $("personName").textContent = P.name;
   $("pjAblaufName").textContent = P.name;
   $("pjIab").textContent = P.iabJahr;
