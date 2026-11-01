@@ -121,7 +121,10 @@ main { display: grid; gap: 20px; min-width: 0; }
 
 .tabelle { overflow-x: auto; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
-th, td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th, td { padding: 4px 5px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { padding-left: 0; width: 1%; }
+th:nth-child(2), td:nth-child(2) { border-left: 1px solid var(--line); }
+@media (max-width: 640px) { .karte { padding: 10px 8px; } main { gap: 12px; } }
 th { font-weight: 600; font-size: 12.5px; color: var(--muted); vertical-align: bottom; white-space: normal; }
 th:first-child, td:first-child, .links { text-align: left; }
 tr.summe td { font-weight: 600; border-top: 2px solid var(--ink); border-bottom: 0; }
@@ -227,6 +230,7 @@ footer { font-size: 12.5px; color: var(--muted); }
       <section class="karte">
         <h2>Was kommt aufs Konto?</h2>
         <div class="tabelle" id="tKonto"></div>
+        <p class="fuss">Abkürzungen: EK = Eigenkapital · EK Nachz. = EK aus nicht geforderter Nachzahlung · EK Erst. = EK aus Erstattung · EK zus. = zusätzliches EK</p>
         <p class="fuss">Projektkonto ohne IAB-Vorteil. Ergebnis im Jahr = Einnahmen − Bankrate − Steuer bezahlt. Steuer + ist eine Nachzahlung, − eine Erstattung. Die Steuer eines Jahres wird im Folgejahr bezahlt oder erstattet. Je Monat = Ergebnis im Jahr geteilt durch 12.</p>
         <h3>Überleitung zum Gesamtergebnis</h3>
         <div class="tabelle" id="tUeberleitung"></div>
@@ -362,9 +366,9 @@ function rechne(eingabe) {
   p.anteil = anteil * 100;
   // Eigenkapital aus drei Bausteinen: nicht geforderte Nachzahlung, Erstattung, zusätzliches Geld
   const ekTeile = [
-    { posten: "EK Nachzahlung", betrag: p.iab && p.ekNgn ? p.ngn * anteil : 0 },
-    { posten: "EK Erstattung", betrag: p.iab && p.ekErst ? p.erst * anteil : 0 },
-    { posten: "EK zusätzlich", betrag: Math.max(0, p.zusatz) }
+    { posten: "EK Nachz.", betrag: p.iab && p.ekNgn ? p.ngn * anteil : 0 },
+    { posten: "EK Erst.", betrag: p.iab && p.ekErst ? p.erst * anteil : 0 },
+    { posten: "EK zus.", betrag: Math.max(0, p.zusatz) }
   ];
   let frei = p.bedarf;
   for (const t of ekTeile) { t.betrag = Math.min(t.betrag, frei); frei -= t.betrag; }
@@ -574,7 +578,7 @@ function zeichne() {
     zellen: [z.jahr, z.posten, z.sonder ? "–" : eur(z.einnahmen), z.sonder ? "–" : eur(z.rate), z.sonder ? "–" : eur(z.steuerBezahlt, true),
       `<span class="${klasse(z.ergebnis)}">${eur(z.ergebnis, true)}</span>`, z.sonder ? "" : `<span class="${klasse(z.jeMonat)}">${eur(z.jeMonat, true)}</span>`, eur(z.stand, true)]
   }));
-  const kopfK = ["Jahr", "Posten", "Einnahmen", "Bankrate", "Steuer bezahlt (+) / erstattet (−)", "Ergebnis im Jahr", "je Monat", "Kontostand"];
+  const kopfK = ["Jahr", "Posten", "Einnahmen", "Bankrate", "Steuer +/−", "Ergebnis im Jahr", "je Monat", "Kontostand"];
   kopfK.links = 1;
   const sK = ["Summe", "", eur(r.summe.einnahmen), eur(r.summe.rate), eur(r.summe.steuerBezahlt, true), eur(r.projektEnde, true), "", ""];
   $("tKonto").innerHTML = tabelle(kopfK, kz, sK);
