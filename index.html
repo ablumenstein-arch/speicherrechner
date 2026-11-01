@@ -592,8 +592,8 @@ function rechne(eingabe) {
 // Zwei Personen mit eigenem IAB-Jahr. Steuerwerte: IAB gesamt; IAB Gelsenkirchen; Nachzahlung ohne IAB; Erstattung
 /*PERSONEN-START*/
 const PERSONEN = {
-  a: { name: "Alexander Blumenstein", iabJahr: 2023, bescheid: "20.03.2026", werte: null },
-  o: { name: "Oliver Mertins", iabJahr: 2024, bescheid: "07/2026", werte: null }
+  a: { name: "Alexander Blumenstein", iabJahr: 2023, bescheid: "20.03.2026", steuer: 42, werte: null },
+  o: { name: "Oliver Mertins", iabJahr: 2024, bescheid: "07/2026", steuer: 37.68, werte: null }
 };
 /*PERSONEN-ENDE*/
 const BASIS = Object.assign({}, STANDARD);
@@ -815,7 +815,8 @@ function zeichne() {
 function waehlePerson(k) {
   person = k;
   const P = PERSONEN[k];
-  Object.assign(STANDARD, BASIS, P.werte || {});
+  // Steuersatz je Person: Alexander 42 % (Vorgabe 01.11.2026), Oliver 37,68 % (Grenzsteuersatz ESt 2024)
+  Object.assign(STANDARD, BASIS, { steuer: P.steuer }, P.werte || {});
   PDF_STAND = rechne({});
   rateManuell = null;
   schreibe(STANDARD);
