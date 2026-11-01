@@ -134,21 +134,79 @@ tr.tief td:last-child { font-weight: 600; }
 ul.annahmen { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
 footer { font-size: 12.5px; color: var(--muted); }
 @media (prefers-reduced-motion: no-preference) { .ergebnis .gross { transition: color .2s; } }
+
+/* Personenwahl und Reiter */
+[hidden] { display: none !important; }
+.kopfzeile { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 20px; flex-wrap: wrap; }
+.person { display: inline-flex; flex-wrap: wrap; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+.person button { border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 7px; display: grid; justify-items: start; line-height: 1.25; font-weight: 600; font-size: 14px; }
+.person button small { font-weight: 400; font-size: 11.5px; }
+.person button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.person button[aria-pressed="true"]:hover { color: var(--panel); }
+.reiter { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.reiter button { font-family: var(--f-head); font-weight: 600; font-size: 15px; color: var(--muted); background: none; border: 0; border-radius: 0; padding: 9px 14px; border-bottom: 3px solid transparent; white-space: nowrap; }
+.reiter button:focus-visible { outline-offset: -3px; }
+.reiter button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+.stapel { display: grid; gap: 20px; min-width: 0; }
+.kennzahlen.vier { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 720px) { .kennzahlen.vier { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.zwei { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 760px) { .zwei { grid-template-columns: minmax(0, 1fr); } }
+.steck th, .steck td { text-align: left; white-space: normal; vertical-align: top; }
+.steck td:first-child, .steck th:first-child { width: auto; }
+.steck th:nth-child(2), .steck td:nth-child(2) { border-left: 0; }
+.steck td.r { text-align: right; }
+.steck td.status { width: 1%; text-align: center; }
+.quelle { font-size: 12.5px; color: var(--muted); }
+.ort { display: flex; gap: 12px; align-items: center; }
+.pin { width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; }
+.pin svg { width: 22px; height: 22px; fill: var(--accent); }
+a { color: var(--accent); }
+.legende { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); align-items: center; }
+.gruppe h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 12px 0 4px; }
+.dok { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.dok .ic { width: 34px; height: 40px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font: 600 10px var(--f-head); display: grid; place-items: end center; padding-bottom: 5px; }
+.dok .n { font-weight: 500; }
+.dok .m { font-size: 12.5px; color: var(--muted); }
+.stufe { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.s-off { background: var(--pos-soft); color: var(--pos); }
+.s-sp { background: var(--accent-soft); color: var(--accent); }
+a.oeffnen { font-weight: 600; font-size: 13px; border: 1px solid var(--accent); border-radius: 6px; padding: 4px 10px; text-decoration: none; white-space: nowrap; }
+a.oeffnen:hover { background: var(--accent-soft); }
+a.oeffnen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .dok { grid-template-columns: 34px minmax(0, 1fr) auto; }
+  .dok .stufe { grid-column: 2; justify-self: start; }
+  .dok a.oeffnen { grid-column: 3; grid-row: 1 / span 2; }
+}
 </style>
 
 <div class="seite">
-  <header class="kopf">
-    <p class="eyebrow">Rechner · Speicher-Kraftwerk · 1 Einheit</p>
-    <h1>Speicher Gelsenkirchen</h1>
-    <p class="datenzeile">Kaufpreis 132.500 € netto · Betrieb BauMit, Auszahlung 74 % der Erlöse · Erlöse 2027 bis 2041 laut Prognose des Verkäufers · IAB-Werte bitte selbst eintragen</p>
-  </header>
+  <div class="kopfzeile">
+    <header class="kopf">
+      <p class="eyebrow">Rechner · Speicher-Kraftwerk · 1 Einheit · <span id="personName">Oliver Mertins</span></p>
+      <h1>Speicher Gelsenkirchen</h1>
+      <p class="datenzeile">Kaufpreis 132.500 € netto · Betrieb BauMit, Auszahlung 74 % der Erlöse · Erlöse 2027 bis 2041 laut Prognose des Verkäufers · <span id="iabHerkunft">IAB-Werte bitte selbst eintragen</span></p>
+    </header>
+    <div class="person" role="group" aria-label="Person wählen">
+      <button type="button" id="personA" data-person="a" aria-pressed="false">Alexander Blumenstein<small>IAB 2023</small></button>
+      <button type="button" id="personO" data-person="o" aria-pressed="true">Oliver Mertins<small>IAB 2024</small></button>
+    </div>
+  </div>
 
+  <nav class="reiter" role="tablist" aria-label="Bereiche">
+    <button type="button" role="tab" id="tabRechner" aria-selected="true" aria-controls="pRechner">Rechner</button>
+    <button type="button" role="tab" id="tabProjekt" aria-selected="false" aria-controls="pProjekt">Projekt</button>
+    <button type="button" role="tab" id="tabUnterlagen" aria-selected="false" aria-controls="pUnterlagen">Unterlagen</button>
+  </nav>
+
+  <section id="pRechner" role="tabpanel" aria-labelledby="tabRechner">
   <div class="raster">
     <aside>
       <form id="eingaben" autocomplete="off">
         <fieldset id="ekFelder">
           <legend>Eigenkapital</legend>
-          <div class="feld"><label for="iabGesamt">IAB 2024 gesamt</label><span class="eingabe"><input id="iabGesamt" inputmode="decimal"><i>€</i></span></div>
+          <div class="feld"><label for="iabGesamt">IAB <span class="iabJahr">2024</span> gesamt</label><span class="eingabe"><input id="iabGesamt" inputmode="decimal"><i>€</i></span></div>
           <div class="feld"><label for="iabProjekt">davon IAB Gelsenkirchen</label><span class="eingabe"><input id="iabProjekt" inputmode="decimal"><i>€</i></span></div>
           <p class="hinweis" id="anteilText"></p>
 
@@ -197,11 +255,11 @@ footer { font-size: 12.5px; color: var(--muted); }
       <fieldset>
         <legend>Steuer</legend>
         <div class="feld"><label for="steuer">Steuersatz auf den Gewinn</label><span class="eingabe"><input id="steuer" inputmode="decimal"><i>%</i></span></div>
-        <label class="schalter"><input type="checkbox" id="iab"> IAB 2024 berücksichtigen</label>
+        <label class="schalter"><input type="checkbox" id="iab"> IAB <span class="iabJahr">2024</span> berücksichtigen</label>
       </fieldset>
 
       <fieldset id="iabFelder">
-        <legend>IAB 2024</legend>
+        <legend>IAB <span class="iabJahr">2024</span></legend>
         <div class="feld"><label for="herab">Abzug vom Kaufpreis für die AfA</label><span class="eingabe"><input id="herab" inputmode="decimal"><i>%</i></span></div>
         <p class="hinweis" id="iabText"></p>
       </fieldset>
@@ -234,7 +292,7 @@ footer { font-size: 12.5px; color: var(--muted); }
         <p class="fuss">Projektkonto ohne IAB-Vorteil. Ergebnis im Jahr = Einnahmen − Bankrate − Steuer bezahlt. Steuer + ist eine Nachzahlung, − eine Erstattung. Die Steuer eines Jahres wird im Folgejahr bezahlt oder erstattet. Je Monat = Ergebnis im Jahr geteilt durch 12.</p>
         <h3>Überleitung zum Gesamtergebnis</h3>
         <div class="tabelle" id="tUeberleitung"></div>
-        <p class="fuss">Der IAB-Vorteil 2024 entsteht aus dem Steuerbescheid 2024 und wird nur einmal gezählt. Die nicht geforderte Nachzahlung ist kein Geldeingang: Dieser Betrag musste nicht gezahlt werden. Wird Eigenkapital aus der Erstattung bezahlt, steht es oben als Abgang im Projektkonto und der IAB-Vorteil nur hier.</p>
+        <p class="fuss">Der IAB-Vorteil <span class="iabJahr">2024</span> entsteht aus dem Steuerbescheid <span class="iabJahr">2024</span> und wird nur einmal gezählt. Die nicht geforderte Nachzahlung ist kein Geldeingang: Dieser Betrag musste nicht gezahlt werden. Wird Eigenkapital aus der Erstattung bezahlt, steht es oben als Abgang im Projektkonto und der IAB-Vorteil nur hier.</p>
       </section>
 
       <section class="karte">
@@ -255,7 +313,7 @@ footer { font-size: 12.5px; color: var(--muted); }
           <li>Einnahmen 2027 bis 2041: Bruttoerlöse laut Wirtschaftlichkeitsprognose des Verkäufers, davon die eingestellte Auszahlungsquote.</li>
           <li>AfA ab November 2026. Sonder-AfA nach § 7g Abs. 5 EStG voll im Jahr 2026. Ab 2031 wird der Restwert über die Restnutzungsdauer verteilt, § 7a Abs. 9 EStG.</li>
           <li>Degressive AfA ist für Anschaffungen von Juli 2025 bis Dezember 2027 mit höchstens 30 % möglich.</li>
-          <li>Der IAB mindert die AfA-Grundlage um den eingestellten Prozentsatz, § 7g Abs. 2 EStG. Die IAB-Beträge aus dem Bescheid 2024 fließen 2026 zu.</li>
+          <li>Der IAB mindert die AfA-Grundlage um den eingestellten Prozentsatz, § 7g Abs. 2 EStG. Er mindert sie höchstens um den IAB, der für Gelsenkirchen gebildet wurde. Die IAB-Beträge aus dem Bescheid <span class="iabJahr">2024</span> fließen 2026 zu.</li>
           <li>Eigenkapital wird 2026 eingesetzt und senkt das Darlehen. Bei 100 % Eigenkapital gibt es kein Darlehen.</li>
           <li>Nicht enthalten: Einrichtungsgebühr, außerplanmäßige Reparaturen, Umsatzsteuer, Bereitstellungsprovision, Erlöse und Restwert nach 2041.</li>
         </ul>
@@ -263,6 +321,100 @@ footer { font-size: 12.5px; color: var(--muted); }
       <footer>Stand 01.11.2026 · Modellrechnung · keine Steuerberatung</footer>
     </main>
   </div>
+  </section>
+
+  <section id="pProjekt" class="stapel" role="tabpanel" aria-labelledby="tabProjekt" hidden>
+    <div class="kennzahlen vier">
+      <div class="kz"><span class="lbl">Kaufpreis netto</span><span class="wert" id="pjKaufpreis">132.500 €</span><span class="zusatz">Kaufvertrag BauMit</span></div>
+      <div class="kz"><span class="lbl">Leistung</span><span class="wert">125 kW</span><span class="zusatz">261,2 kWh Kapazität</span></div>
+      <div class="kz"><span class="lbl">IAB</span><span class="wert" id="pjIab">2024</span><span class="zusatz" id="pjIabText">Steuerbescheid 2024</span></div>
+      <div class="kz"><span class="lbl">Gesamtergebnis 2042</span><span class="wert" id="pjErgebnis">–</span><span class="zusatz">aus dem Rechner, mit IAB-Vorteil</span></div>
+    </div>
+
+    <div class="zwei">
+      <section class="karte">
+        <h2>Standort</h2>
+        <div class="ort">
+          <div class="pin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></div>
+          <div>Magdeburger Str. 16B<br>45881 Gelsenkirchen<br><a href="https://www.openstreetmap.org/search?query=Magdeburger%20Str.%2016B%2045881%20Gelsenkirchen" target="_blank" rel="noopener">Auf der Karte öffnen</a></div>
+        </div>
+        <table class="steck">
+          <tr><td>Cluster</td><td class="r">8 Module, 1 MW, 2,1 MWh</td></tr>
+          <tr><td>Netzanschluss</td><td class="r">gemeinsam für alle Module</td></tr>
+          <tr><td>Betriebsführung</td><td class="r">BauMit Immobilienservice GmbH</td></tr>
+        </table>
+        <p class="quelle">Quelle: Datenblatt Gelsenkirchen, Seite 3</p>
+      </section>
+
+      <section class="karte">
+        <h2>Technik je Modul</h2>
+        <table class="steck">
+          <tr><td>Modell</td><td class="r">AlphaESS STORION-LC-TB125</td></tr>
+          <tr><td>Batterietyp</td><td class="r">LiFePO4</td></tr>
+          <tr><td>Wirkungsgrad</td><td class="r">90,6 %</td></tr>
+          <tr><td>Zyklen</td><td class="r">≥ 8.000 bis 70 % Restkapazität</td></tr>
+          <tr><td>Kühlung</td><td class="r">Flüssigkühlung</td></tr>
+          <tr><td>Alterung</td><td class="r">2 % im Jahr</td></tr>
+        </table>
+        <p class="quelle">Quelle: Datenblatt Gelsenkirchen, Seiten 4 und 5</p>
+      </section>
+
+      <section class="karte">
+        <h2>Absicherung</h2>
+        <table class="steck">
+          <thead><tr><th>Posten</th><th>Dauer</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Produktgarantie</td><td>10 Jahre</td><td class="status">✅</td></tr>
+            <tr><td>Leistungsgarantie 70 %</td><td>10 Jahre</td><td class="status">✅</td></tr>
+            <tr><td>Ersatzteile</td><td>15 Jahre</td><td class="status">✅</td></tr>
+            <tr><td>Elektronik- und Ertragsausfallversicherung</td><td>laufend</td><td class="status">✅</td></tr>
+          </tbody>
+        </table>
+        <p class="quelle">Quelle: Datenblatt Gelsenkirchen, Seiten 6 und 7</p>
+      </section>
+
+      <section class="karte">
+        <h2>Ablauf <span id="pjAblaufName">Oliver Mertins</span></h2>
+        <table class="steck">
+          <thead><tr><th>Schritt</th><th>Datum</th><th>Status</th></tr></thead>
+          <tbody id="pjAblauf"></tbody>
+        </table>
+        <p class="quelle">Bankraten aus dem Rechner, sie ändern sich mit den Eingaben</p>
+      </section>
+    </div>
+  </section>
+
+  <section id="pUnterlagen" role="tabpanel" aria-labelledby="tabUnterlagen" hidden>
+    <div class="karte">
+      <div class="legende">
+        <span><span class="stufe s-off">öffentlich</span> für jeden mit dem Link zum Rechner</span>
+        <span><span class="stufe s-sp">SharePoint</span> nur mit Anmeldung bei MobaGroup</span>
+      </div>
+
+      <div class="gruppe">
+        <h3>Projekt · für beide</h3>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Datenblatt Gelsenkirchen</div><div class="m">BauMit · 8 Seiten · 633 KB</div></div><span class="stufe s-off">öffentlich</span><a class="oeffnen" target="_blank" rel="noopener" href="https://ablumenstein-arch.github.io/speicherrechner/unterlagen/01_Datenblatt_Gelsenkirchen.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Investorenbriefing BauMit</div><div class="m">BauMit · 9 Seiten · 743 KB</div></div><span class="stufe s-off">öffentlich</span><a class="oeffnen" target="_blank" rel="noopener" href="https://ablumenstein-arch.github.io/speicherrechner/unterlagen/02_Investorenbriefing_BauMit.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Wirtschaftlichkeitsprognose</div><div class="m">BauMit · 1 Seite · 91 KB</div></div><span class="stufe s-off">öffentlich</span><a class="oeffnen" target="_blank" rel="noopener" href="https://ablumenstein-arch.github.io/speicherrechner/unterlagen/03_Wirtschaftlichkeitsprognose.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Finanzierungsvorbehalt Alexander Blumenstein und Oliver Mertins</div><div class="m">1 Seite · 96 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/04_Finanzierungsvorbehalt_Blumenstein_Mertins.pdf">Öffnen</a></div>
+      </div>
+
+      <div class="gruppe" data-nur="a" hidden>
+        <h3>Verträge Alexander Blumenstein</h3>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Kaufvertrag</div><div class="m">13 Seiten · 813 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/11_Kaufvertrag_Alexander_Blumenstein.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Servicevertrag</div><div class="m">14 Seiten · 951 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/12_Servicevertrag_Alexander_Blumenstein.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Unterpachtvertrag</div><div class="m">6 Seiten · 613 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/13_Unterpachtvertrag_Alexander_Blumenstein.pdf">Öffnen</a></div>
+      </div>
+
+      <div class="gruppe" data-nur="o">
+        <h3>Verträge Oliver Mertins</h3>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Kaufvertrag</div><div class="m">13 Seiten · 782 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/08_Kaufvertrag_Oliver_Mertins.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Servicevertrag</div><div class="m">14 Seiten · 978 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/09_Servicevertrag_Oliver_Mertins.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Unterpachtvertrag</div><div class="m">6 Seiten · 582 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/10_Unterpachtvertrag_Oliver_Mertins.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Berechnung 15 Jahre, IAB 2024</div><div class="m">Stand 01.11.2026</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Gelsenkirchen%20Speicher%20Mertins%2015%20Jahre%202026-11-01.pdf">Öffnen</a></div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <script>
@@ -331,7 +483,10 @@ function darlehen(betrag, zinsPct, rate) {
 // AfA ab November 2026; Sonder-AfA im Jahr 2026; ab 2031 Restwert über Restnutzungsdauer (§ 7a Abs. 9 EStG)
 function afaPlan(p) {
   const plan = {};
-  const basis = p.kaufpreis * (1 - (p.iab ? p.herab / 100 : 0));
+  // Herabsetzung nach § 7g Abs. 2 EStG höchstens in Höhe des IAB, der für Gelsenkirchen gebildet wurde
+  const abzugMax = p.kaufpreis * p.herab / 100;
+  const abzug = p.iab ? Math.min(abzugMax, Math.max(0, p.iabProjekt)) : 0;
+  const basis = p.kaufpreis - abzug;
   const gesamtMon = Math.max(1, Math.round(p.nd * 12));
   const mon2026 = 2;
   const sonder = basis * p.sonder / 100;
@@ -361,7 +516,7 @@ function afaPlan(p) {
 
 function rechne(eingabe) {
   const p = Object.assign({}, STANDARD, eingabe);
-  // Anteil Gelsenkirchen am IAB 2024 = IAB Gelsenkirchen / IAB gesamt
+  // Anteil Gelsenkirchen am IAB des Jahres = IAB Gelsenkirchen / IAB gesamt
   const anteil = p.iabGesamt > 0 ? Math.min(1, Math.max(0, p.iabProjekt / p.iabGesamt)) : 0;
   p.anteil = anteil * 100;
   // Eigenkapital aus drei Bausteinen: nicht geforderte Nachzahlung, Erstattung, zusätzliches Geld
@@ -396,7 +551,7 @@ function rechne(eingabe) {
   }
 
   // Projektkonto ohne IAB: Eigenkapital als eigene Zeile, danach ein Betriebsjahr je Zeile.
-  // Der IAB-Vorteil 2024 steht getrennt in der Überleitung, damit er nicht doppelt neben dem Eigenkapital erscheint.
+  // Der IAB-Vorteil steht getrennt in der Überleitung, damit er nicht doppelt neben dem Eigenkapital erscheint.
   const zeilen = [];
   for (const t of ekTeile) if (t.betrag > 0.004) zeilen.push({ jahr: 2026, posten: t.posten, ergebnis: -t.betrag, sonder: true });
   for (const z of jahre) {
@@ -433,12 +588,30 @@ function rechne(eingabe) {
 }
 /*MODELL-ENDE*/
 
-// IAB-Werte aus dem Link übernehmen: #iab=IAB gesamt;IAB Projekt;Nachzahlung ohne IAB;Erstattung
+// Zwei Personen mit eigenem IAB-Jahr. Steuerwerte: IAB gesamt; IAB Gelsenkirchen; Nachzahlung ohne IAB; Erstattung
+/*PERSONEN-START*/
+const PERSONEN = {
+  a: { name: "Alexander Blumenstein", iabJahr: 2023, bescheid: "20.03.2026", werte: null },
+  o: { name: "Oliver Mertins", iabJahr: 2024, bescheid: "07/2026", werte: null }
+};
+/*PERSONEN-ENDE*/
+const BASIS = Object.assign({}, STANDARD);
+let person = "o";
+
+// Werte aus dem Link: #a=…;…;…;…&o=…;…;…;…&p=a  (alte Form #iab=… gilt für Oliver Mertins)
 (function () {
-  const m = /iab=([\d.;]+)/.exec(decodeURIComponent(location.hash || ""));
-  if (!m) return;
-  const w = m[1].split(";").map(Number);
-  if (w.length === 4 && w.every(isFinite)) Object.assign(STANDARD, { iabGesamt: w[0], iabProjekt: w[1], ngn: w[2], erst: w[3] });
+  let h = "";
+  try { h = decodeURIComponent(location.hash || "").replace(/^#/, ""); } catch (e) { return; }
+  for (const teil of h.split("&")) {
+    const i = teil.indexOf("=");
+    if (i < 0) continue;
+    const k = teil.slice(0, i), v = teil.slice(i + 1);
+    if (k === "p" && v in PERSONEN) { person = v; continue; }
+    const wer = k === "iab" ? "o" : k;
+    if (!(wer in PERSONEN)) continue;
+    const w = v.split(";").map(Number);
+    if (w.length === 4 && w.every(x => isFinite(x) && x >= 0)) PERSONEN[wer].werte = { iabGesamt: w[0], iabProjekt: w[1], ngn: w[2], erst: w[3] };
+  }
 })();
 
 // ---------- Oberfläche ----------
@@ -446,7 +619,7 @@ const $ = id => document.getElementById(id);
 const FELDER = { iabGesamt: 0, iabProjekt: 0, ngn: 2, erst: 2, zusatz: 0, bedarf: 0, zins: 2, quote: 1, ertrag: 0, kaufpreis: 0, nd: 0, sonder: 0, degSatz: 0, steuer: 2, herab: 0 };
 const GRENZEN = { quote: [0, 100], ertrag: [0, 300], sonder: [0, 40], degSatz: [0, 30], steuer: [0, 60], herab: [0, 50], nd: [1, 40], zins: [0, 20] };
 let rateManuell = null;
-const PDF_STAND = rechne({});
+let PDF_STAND = rechne({});
 
 function zahl(s) {
   s = String(s).replace(/[€%\s ]/g, "").replace("−", "-");
@@ -549,7 +722,7 @@ function zeichne() {
   if (rateManuell === null && document.activeElement !== $("rate")) $("rate").value = zf(r.rate, 2);
   $("afaText").textContent = `AfA-Grundlage ${eur(r.afa.basis)}${r.afa.sonder > 0 ? ` · Sonder-AfA ${eur(r.afa.sonder)}` : ""}`;
   $("iabFelder").disabled = !p.iab;
-  $("iabText").textContent = p.iab ? `IAB-Vorteil 2024 für Gelsenkirchen: ${eur(r.iabSumme)}, steht in der Überleitung.` : "IAB nicht berücksichtigt.";
+  $("iabText").textContent = p.iab ? `IAB-Vorteil ${PERSONEN[person].iabJahr} für Gelsenkirchen: ${eur(r.iabSumme)}, steht in der Überleitung.` : "IAB nicht berücksichtigt.";
   $("degSatz").closest(".feld").style.opacity = p.methode === "degressiv" ? "" : ".45";
 
   // Kopfzahl und Kennzahlen
@@ -616,7 +789,57 @@ function zeichne() {
   } else {
     $("tDarlehen").innerHTML = `<p class="fuss">Kein Darlehen: Die Einheit ist zu 100 % mit Eigenkapital bezahlt.</p>`;
   }
+
+  // Reiter Projekt: Werte der gewählten Person aus der aktuellen Rechnung
+  const P = PERSONEN[person];
+  $("pjKaufpreis").textContent = eur(p.kaufpreis);
+  $("pjErgebnis").textContent = eur(r.endstand, true);
+  $("pjErgebnis").className = "wert " + klasse(r.endstand);
+  const mmjj = e => String(e.m).padStart(2, "0") + "/" + e.y;
+  const ablauf = [
+    ["IAB gebildet", String(P.iabJahr), true],
+    [`Steuerbescheid ${P.iabJahr} mit IAB`, P.bescheid, true],
+    ["Kaufvertrag", "2026", true],
+    ["Inbetriebnahme, Beginn AfA", "11/2026", false]
+  ];
+  if (r.betrag > 0) {
+    ablauf.push(["Erste Bankrate", "01/2027", false]);
+    ablauf.push(["Letzte Bankrate", r.dl.ende ? mmjj(r.dl.ende) : "nach 2042", false]);
+  }
+  ablauf.push(["Letzte Erlöse laut Prognose", String(START_ERLOES + PROGNOSE_BRUTTO.length - 1), false]);
+  $("pjAblauf").innerHTML = ablauf.map(([s, d, ok]) => `<tr><td>${s}</td><td>${d}</td><td class="status">${ok ? "✅" : "❌"}</td></tr>`).join("");
 }
+
+// Person wechseln: IAB-Jahr, Steuerwerte und Verträge der Person; übrige Eingaben auf Ausgangswerte
+function waehlePerson(k) {
+  person = k;
+  const P = PERSONEN[k];
+  Object.assign(STANDARD, BASIS, P.werte || {});
+  PDF_STAND = rechne({});
+  rateManuell = null;
+  schreibe(STANDARD);
+  document.querySelectorAll(".iabJahr").forEach(el => { el.textContent = P.iabJahr; });
+  document.querySelectorAll("[data-person]").forEach(b => b.setAttribute("aria-pressed", b.dataset.person === k ? "true" : "false"));
+  document.querySelectorAll("[data-nur]").forEach(el => { el.hidden = el.dataset.nur !== k; });
+  $("personName").textContent = P.name;
+  $("pjAblaufName").textContent = P.name;
+  $("pjIab").textContent = P.iabJahr;
+  $("pjIabText").textContent = `Steuerbescheid ${P.iabJahr} · ${P.bescheid}`;
+  $("iabHerkunft").textContent = P.werte ? `IAB ${P.iabJahr} laut Steuerbescheid` : "IAB-Werte bitte selbst eintragen";
+  try {
+    const teile = location.hash.replace(/^#/, "").split("&").filter(t => t && !t.startsWith("p="));
+    teile.push("p=" + k);
+    history.replaceState(null, "", "#" + teile.join("&"));
+  } catch (e) { /* Link bleibt unverändert */ }
+  zeichne();
+}
+document.querySelectorAll("[data-person]").forEach(b => b.addEventListener("click", () => waehlePerson(b.dataset.person)));
+
+// Reiter Rechner, Projekt, Unterlagen
+const REITER = [["tabRechner", "pRechner"], ["tabProjekt", "pProjekt"], ["tabUnterlagen", "pUnterlagen"]];
+REITER.forEach(([t]) => $(t).addEventListener("click", () => {
+  REITER.forEach(([t2, p2]) => { $(t2).setAttribute("aria-selected", t2 === t ? "true" : "false"); $(p2).hidden = t2 !== t; });
+}));
 
 function setzeEk(v) { $("zusatz").value = zf(Math.max(0, v), 0); zeichne(); }
 
@@ -641,7 +864,6 @@ $("ekKnoepfe").addEventListener("click", ev => {
 $("zuruecksetzen").addEventListener("click", () => { rateManuell = null; schreibe(STANDARD); zeichne(); });
 $("eingaben").addEventListener("submit", ev => ev.preventDefault());
 
-schreibe(STANDARD);
-zeichne();
+waehlePerson(person);
 </script>
 </html>
