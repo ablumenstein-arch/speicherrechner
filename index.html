@@ -170,9 +170,7 @@ footer { font-size: 12.5px; color: var(--muted); }
           <legend>Finanzierung</legend>
           <div class="feld"><label for="bedarf">Finanzierungsbedarf</label><span class="eingabe"><input id="bedarf" inputmode="decimal"><i>€</i></span></div>
           <div class="feld"><label for="zins">Sollzins</label><span class="eingabe"><input id="zins" inputmode="decimal"><i>%</i></span></div>
-          <div class="feld"><label for="rateVoll">Rate laut Bankangebot, volles Darlehen</label><span class="eingabe"><input id="rateVoll" inputmode="decimal"><i>€</i></span></div>
-          <div class="feld"><label for="rateModus">Rate bei Eigenkapital</label><span class="eingabe"><select id="rateModus"><option value="anteilig">sinkt anteilig</option><option value="fest">bleibt gleich</option></select></span></div>
-          <p class="rate-aktuell" id="rateText"></p>
+          <div class="feld"><label for="rate">Monatsrate</label><span class="eingabe"><input id="rate" inputmode="decimal"><i>€</i></span></div>
         </fieldset>
       </form>
 
@@ -441,8 +439,9 @@ function rechne(eingabe) {
 
 // ---------- Oberfläche ----------
 const $ = id => document.getElementById(id);
-const FELDER = { iabGesamt: 0, iabProjekt: 0, ngn: 2, erst: 2, zusatz: 0, bedarf: 0, zins: 2, rateVoll: 2, quote: 1, ertrag: 0, kaufpreis: 0, nd: 0, sonder: 0, degSatz: 0, steuer: 2, herab: 0 };
+const FELDER = { iabGesamt: 0, iabProjekt: 0, ngn: 2, erst: 2, zusatz: 0, bedarf: 0, zins: 2, quote: 1, ertrag: 0, kaufpreis: 0, nd: 0, sonder: 0, degSatz: 0, steuer: 2, herab: 0 };
 const GRENZEN = { quote: [0, 100], ertrag: [0, 300], sonder: [0, 40], degSatz: [0, 30], steuer: [0, 60], herab: [0, 50], nd: [1, 40], zins: [0, 20] };
+let rateManuell = null;
 const PDF_STAND = rechne({});
 
 function zahl(s) {
@@ -475,14 +474,15 @@ function lies() {
   }
   e.ekNgn = $("ekNgn").checked;
   e.ekErst = $("ekErst").checked;
-  e.rateModus = $("rateModus").value;
+  e.rateModus = rateManuell === null ? "anteilig" : "fest";
+  e.rateVoll = rateManuell === null ? STANDARD.rateVoll : rateManuell;
   e.methode = $("methode").value;
   e.iab = $("iab").checked;
   return e;
 }
 function schreibe(e) {
   for (const [k, nk] of Object.entries(FELDER)) $(k).value = zf(e[k], nk);
-  $("rateModus").value = e.rateModus; $("methode").value = e.methode; $("iab").checked = e.iab;
+  $("methode").value = e.methode; $("iab").checked = e.iab;
   $("ekNgn").checked = e.ekNgn; $("ekErst").checked = e.ekErst;
 }
 
@@ -541,9 +541,8 @@ function zeichne() {
   $("ekErstText").textContent = `als Eigenkapital einsetzen: ${eur(r.iabErst || p.erst * p.anteil / 100)} (${pz} %)`;
   $("ekNgn").disabled = !p.iab; $("ekErst").disabled = !p.iab;
   $("ekText").textContent = `Eigenkapital gesamt ${eur(r.ek)} · Darlehen ${eur(r.betrag)} · Eigenkapitalquote ${quote.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`;
-  $("rateText").textContent = r.betrag > 0
-    ? `Ihre Monatsrate: ${r.rate.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € · getilgt ${r.dl.ende ? String(r.dl.ende.m).padStart(2, "0") + "/" + r.dl.ende.y : "nach 2042"}`
-    : "Kein Darlehen.";
+  // Eine Zeile für die Rate: folgt dem Darlehen automatisch, bis sie von Hand überschrieben wird
+  if (rateManuell === null && document.activeElement !== $("rate")) $("rate").value = zf(r.rate, 2);
   $("afaText").textContent = `AfA-Grundlage ${eur(r.afa.basis)}${r.afa.sonder > 0 ? ` · Sonder-AfA ${eur(r.afa.sonder)}` : ""}`;
   $("iabFelder").disabled = !p.iab;
   $("iabText").textContent = p.iab ? `IAB-Vorteil 2024 für Gelsenkirchen: ${eur(r.iabSumme)}, steht in der Überleitung.` : "IAB nicht berücksichtigt.";
@@ -611,6 +610,7 @@ function zeichne() {
 function setzeEk(v) { $("zusatz").value = zf(Math.max(0, v), 0); zeichne(); }
 
 document.addEventListener("input", ev => {
+  if (ev.target.id === "rate") { const v = zahl(ev.target.value); rateManuell = isFinite(v) && v > 0 ? v : null; }
   if (ev.target.id === "ekRegler") { $("zusatz").value = zf(Number(ev.target.value), 0); }
   zeichne();
 });
@@ -627,11 +627,10 @@ $("ekKnoepfe").addEventListener("click", ev => {
   const r = rechne(Object.assign(lies(), { zusatz: 0 }));
   setzeEk(r.p.bedarf - r.ek);
 });
-$("zuruecksetzen").addEventListener("click", () => { schreibe(STANDARD); zeichne(); });
+$("zuruecksetzen").addEventListener("click", () => { rateManuell = null; schreibe(STANDARD); zeichne(); });
 $("eingaben").addEventListener("submit", ev => ev.preventDefault());
 
 schreibe(STANDARD);
 zeichne();
 </script>
-
 </html>
