@@ -21,6 +21,9 @@
   --pos-soft: #e1f2e8;
   --neg: #b42318;
   --neg-soft: #fbe8e6;
+  --gold: #b7791f;
+  --zweit: #9fb3c2;
+  --steuer: #6b4fa0;
   --f-text: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
   --f-head: "IBM Plex Sans Condensed", "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
 }
@@ -28,13 +31,13 @@
   :root:not([data-theme="light"]) {
     --bg: #0e161c; --panel: #15212a; --ink: #e3ebf0; --muted: #93a5b2; --line: #283845;
     --accent: #72b2df; --accent-soft: #1a3245; --pos: #4cc38a; --pos-soft: #133427;
-    --neg: #f07a6e; --neg-soft: #3b1f1b; color-scheme: dark;
+    --neg: #f07a6e; --neg-soft: #3b1f1b; --gold: #e0b25a; --zweit: #4d6475; --steuer: #a991d8; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0e161c; --panel: #15212a; --ink: #e3ebf0; --muted: #93a5b2; --line: #283845;
   --accent: #72b2df; --accent-soft: #1a3245; --pos: #4cc38a; --pos-soft: #133427;
-  --neg: #f07a6e; --neg-soft: #3b1f1b; color-scheme: dark;
+  --neg: #f07a6e; --neg-soft: #3b1f1b; --gold: #e0b25a; --zweit: #4d6475; --steuer: #a991d8; color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-text); font-size: 15px; line-height: 1.45; }
@@ -134,6 +137,22 @@ tr.tief td:last-child { font-weight: 600; }
 ul.annahmen { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
 footer { font-size: 12.5px; color: var(--muted); }
 @media (prefers-reduced-motion: no-preference) { .ergebnis .gross { transition: color .2s; } }
+
+/* Diagramme (Chart.js) */
+.flaeche { position: relative; height: 320px; min-width: 0; }
+@media (max-width: 640px) { .flaeche { height: 280px; } }
+.unter { color: var(--muted); font-size: 14px; }
+.diagramme { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.diagramme > .karte { grid-template-rows: auto 1fr auto; }
+@supports (grid-template-rows: subgrid) {
+  .diagramme { grid-template-rows: auto auto auto; }
+  .diagramme > .karte { grid-row: span 3; grid-template-rows: subgrid; }
+}
+@media (max-width: 1240px) {
+  .diagramme { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .diagramme > .karte { grid-row: auto; grid-template-rows: auto auto auto; }
+}
+.diagramme .unter { align-self: start; }
 
 /* Personenwahl und Reiter */
 [hidden] { display: none !important; }
@@ -280,7 +299,26 @@ a.oeffnen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px;
         <p class="warnung" id="warnung" hidden></p>
       </section>
 
-      <section class="karte">
+      <section class="karte" id="kErgebnis">
+        <h2>Woher kommt das Ergebnis?</h2>
+        <p class="unter" id="cErgebnisText">Summen über 15 Jahre.</p>
+        <div class="flaeche"><canvas id="cErgebnis" aria-label="Balkendiagramm: Einnahmen, Bankraten, Steuer, IAB-Vorteil, Ergebnis"></canvas></div>
+      </section>
+
+      <div class="diagramme" id="kDiagramme">
+        <section class="karte">
+          <h2>Kontostand am Jahresende</h2>
+          <p class="unter">Beide Personen im Vergleich, inklusive IAB-Geld. Der Punkt markiert den tiefsten Stand.</p>
+          <div class="flaeche"><canvas id="cKonto" aria-label="Linien: Kontostand 2026 bis 2042"></canvas></div>
+        </section>
+        <section class="karte">
+          <h2>Jahr für Jahr</h2>
+          <p class="unter">Einnahmen nach oben, Bankrate und Steuer nach unten. Die Linie zeigt das Ergebnis im Jahr.</p>
+          <div class="flaeche"><canvas id="cJahr" aria-label="Balken: Einnahmen, Bankrate, Steuer je Jahr"></canvas></div>
+        </section>
+      </div>
+
+      <section class="karte" id="ersatzDiagramm" hidden>
         <h2>Projektkonto am Jahresende, ohne IAB-Vorteil</h2>
         <div class="diagramm" id="diagramm"></div>
       </section>
@@ -418,6 +456,7 @@ a.oeffnen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px;
   </section>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 /*MODELL-START*/
 // Bruttoerlöse 2027 bis 2041 laut Wirtschaftlichkeitsprognose des Verkäufers (100 % EK)
@@ -750,7 +789,7 @@ function zeichne() {
   if (r.dl.restEnde > 0.5) { w.hidden = false; w.textContent = `Das Darlehen ist Ende 2042 nicht getilgt. Restschuld ${eur(r.dl.restEnde)}; sie ist im Kontostand nicht abgezogen.`; }
   else w.hidden = true;
 
-  $("diagramm").innerHTML = diagramm(r);
+  diagrammeZeichnen(r);
 
   // Konto
   const kz = r.zeilen.map(z => ({
@@ -810,6 +849,113 @@ function zeichne() {
   ablauf.push(["Letzte Erlöse laut Prognose", String(START_ERLOES + PROGNOSE_BRUTTO.length - 1), false]);
   $("pjAblauf").innerHTML = ablauf.map(([s, d, ok]) => `<tr><td>${s}</td><td>${d}</td><td class="status">${ok ? "✅" : "❌"}</td></tr>`).join("");
 }
+
+// ---------- Diagramme mit Chart.js; ohne Chart.js bleibt die einfache Grafik ----------
+let DIA = null;
+function farbe(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function kontoInklIab(r) { const a = []; for (let y = 2026; y <= LETZTES_JAHR; y++) a.push(r.standJahr[y] + r.iabSumme); return a; }
+// Andere Person immer mit ihren Ausgangswerten
+function andereRechnung(k) { const P = PERSONEN[k]; return rechne(Object.assign({}, BASIS, { steuer: P.steuer }, P.werte || {})); }
+
+function diagrammeAnlegen() {
+  if (DIA) DIA.forEach(c => c.destroy());
+  const F = { ink: farbe("--ink"), muted: farbe("--muted"), line: farbe("--line"), accent: farbe("--accent"), pos: farbe("--pos"), neg: farbe("--neg"), gold: farbe("--gold"), zweit: farbe("--zweit"), steuer: farbe("--steuer") };
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.color = F.muted;
+  const tsd = v => Math.round(v / 1000).toLocaleString("de-DE") + " T€";
+  const achse = { grid: { color: F.line }, border: { display: false }, ticks: { callback: v => tsd(v) } };
+  const jahrAchse = { grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 9 } };
+  const basis = { maintainAspectRatio: false, animation: false };
+  const tip = { callbacks: { label: c => (c.dataset.label ? c.dataset.label + ": " : "") + eur(c.raw, true) } };
+  const jahre = []; for (let y = 2026; y <= LETZTES_JAHR; y++) jahre.push(y);
+  const ergebnis = new Chart($("cErgebnis"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ data: [], vorzeichen: [], backgroundColor: [], borderRadius: 4, barPercentage: .62 }] },
+    options: { ...basis, layout: { padding: { top: 22 } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => eur(c.dataset.vorzeichen[c.dataIndex], true) } } },
+      scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: F.ink } }, y: { ...achse, beginAtZero: true } } },
+    plugins: [{ id: "werte", afterDatasetsDraw(ch) {
+      const { ctx } = ch, d = ch.data.datasets[0];
+      const balken = ch.getDatasetMeta(0).data, a = ch.chartArea;
+      // Wenig Platz je Balken: Beträge in T€ und kleiner, damit sich nichts überlappt
+      const eng = balken.length && a.width / balken.length < 90;
+      ctx.save(); ctx.font = "600 " + (eng ? 11 : 13) + "px " + Chart.defaults.font.family; ctx.fillStyle = F.ink; ctx.textAlign = "center";
+      balken.forEach((b, i) => {
+        const v = d.vorzeichen[i];
+        const t = eng ? (v < 0 ? "−" : "+") + Math.round(Math.abs(v) / 1000).toLocaleString("de-DE") + " T€" : eur(v, true);
+        const halb = ctx.measureText(t).width / 2;
+        const x = Math.min(Math.max(b.x, a.left + halb), a.right - halb);  // nicht über den Rand hinaus
+        ctx.fillText(t, x, b.y - 6);
+      });
+      ctx.restore();
+    } }]
+  });
+  const konto = new Chart($("cKonto"), {
+    type: "line",
+    data: { labels: jahre, datasets: [
+      { label: "", data: [], borderColor: F.accent, backgroundColor: F.accent + "22", fill: "origin", borderWidth: 2.5, tension: .25, pointRadius: [], pointBackgroundColor: [] },
+      { label: "", data: [], borderColor: F.zweit, borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, tension: .25, fill: false }
+    ] },
+    options: { ...basis, interaction: { mode: "index", intersect: false }, plugins: { legend: { position: "bottom", labels: { boxWidth: 14, color: F.ink } }, tooltip: tip },
+      scales: { x: jahrAchse, y: { ...achse, beginAtZero: true } } }
+  });
+  const jahr = new Chart($("cJahr"), {
+    data: { labels: jahre, datasets: [
+      { type: "bar", label: "Einnahmen", data: [], backgroundColor: F.pos, stack: "s", borderRadius: 2 },
+      { type: "bar", label: "Bankrate", data: [], backgroundColor: F.neg, stack: "s", borderRadius: 2 },
+      { type: "bar", label: "Steuer", data: [], backgroundColor: F.steuer, stack: "s", borderRadius: 2 },
+      { type: "line", label: "Ergebnis im Jahr", data: [], borderColor: F.ink, backgroundColor: F.ink, borderWidth: 2, pointRadius: 2.5, tension: 0 }
+    ] },
+    options: { ...basis, interaction: { mode: "index", intersect: false }, plugins: { legend: { position: "bottom", labels: { boxWidth: 14, color: F.ink } }, tooltip: tip },
+      scales: { x: { ...jahrAchse, stacked: true }, y: { ...achse, stacked: true } } }
+  });
+  DIA = [ergebnis, konto, jahr];
+  DIA.F = F;
+}
+
+function diagrammeZeichnen(r) {
+  if (typeof Chart === "undefined") {
+    // Chart.js nicht geladen: leere Diagrammkarten ausblenden, einfache Grafik zeigen
+    $("kErgebnis").hidden = true; $("kDiagramme").hidden = true;
+    $("ersatzDiagramm").hidden = false; $("diagramm").innerHTML = diagramm(r); return;
+  }
+  if (!DIA) diagrammeAnlegen();
+  const F = DIA.F, [ergebnis, konto, jahr] = DIA;
+  // Balken ab null, Höhe = Betrag; Eigenkapital erscheint nur, wenn es eingesetzt wird
+  const posten = [["Einnahmen", r.summe.einnahmen, F.pos], ["Bankraten", -r.summe.rate, F.neg], ["Steuer", -r.summe.steuerBezahlt, F.steuer]];
+  if (r.ek > 0.5) posten.push(["Eigenkapital", -r.ek, F.zweit]);
+  if (r.iabSumme > 0.5) posten.push(["IAB-Vorteil", r.iabSumme, F.gold]);
+  posten.push(["Ergebnis 2042", r.endstand, F.accent]);
+  const d0 = ergebnis.data.datasets[0];
+  ergebnis.data.labels = posten.map(x => x[0]);
+  d0.data = posten.map(x => Math.abs(x[1]));
+  d0.vorzeichen = posten.map(x => x[1]);
+  d0.backgroundColor = posten.map(x => x[2]);
+  $("cErgebnisText").textContent = "Summen über 15 Jahre: Einnahmen − Bankraten − Steuer" + (r.ek > 0.5 ? " − Eigenkapital" : "") + (r.iabSumme > 0.5 ? " + IAB-Vorteil" : "") + " = Ergebnis.";
+  ergebnis.update();
+  // Kontostand: gewählte Person mit den aktuellen Eingaben, andere Person mit ihren Ausgangswerten
+  const andere = person === "a" ? "o" : "a";
+  const k1 = kontoInklIab(r), k2 = kontoInklIab(andereRechnung(andere));
+  const tiefI = k1.indexOf(Math.min(...k1));
+  const [l1, l2] = konto.data.datasets;
+  l1.label = PERSONEN[person].name;
+  l1.data = k1;
+  l1.pointRadius = k1.map((_, i) => i === tiefI || i === k1.length - 1 ? 5 : 0);
+  l1.pointBackgroundColor = k1.map((_, i) => i === tiefI ? F.gold : F.accent);
+  l2.label = PERSONEN[andere].name + ", Ausgangswerte";
+  l2.data = k2;
+  konto.update();
+  // Jahr für Jahr
+  const [e1, b1, s1, g1] = jahr.data.datasets;
+  e1.data = r.jahre.map(z => z.einnahmen);
+  b1.data = r.jahre.map(z => -z.rate);
+  s1.data = r.jahre.map(z => -z.steuerBezahlt);
+  g1.data = r.jahre.map(z => z.ergebnis);
+  jahr.update();
+}
+// Hell und dunkel: Diagramme mit den neuen Farben neu anlegen
+function farbwechsel() { if (DIA && typeof Chart !== "undefined") { diagrammeAnlegen(); zeichne(); } }
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", farbwechsel);
+new MutationObserver(farbwechsel).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
 // Person wechseln: IAB-Jahr, Steuerwerte und Verträge der Person; übrige Eingaben auf Ausgangswerte
 function waehlePerson(k) {
