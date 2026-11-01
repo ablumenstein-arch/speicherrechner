@@ -362,9 +362,9 @@ function rechne(eingabe) {
   p.anteil = anteil * 100;
   // Eigenkapital aus drei Bausteinen: nicht geforderte Nachzahlung, Erstattung, zusätzliches Geld
   const ekTeile = [
-    { posten: "Eigenkapital aus nicht geforderter Nachzahlung", betrag: p.iab && p.ekNgn ? p.ngn * anteil : 0 },
-    { posten: "Eigenkapital aus Erstattung", betrag: p.iab && p.ekErst ? p.erst * anteil : 0 },
-    { posten: "Zusätzliches Eigenkapital", betrag: Math.max(0, p.zusatz) }
+    { posten: "EK Nachzahlung", betrag: p.iab && p.ekNgn ? p.ngn * anteil : 0 },
+    { posten: "EK Erstattung", betrag: p.iab && p.ekErst ? p.erst * anteil : 0 },
+    { posten: "EK zusätzlich", betrag: Math.max(0, p.zusatz) }
   ];
   let frei = p.bedarf;
   for (const t of ekTeile) { t.betrag = Math.min(t.betrag, frei); frei -= t.betrag; }
@@ -581,10 +581,10 @@ function zeichne() {
 
   // Überleitung: Projektkonto + IAB-Vorteil = Gesamtergebnis
   const a = p.anteil.toLocaleString("de-DE", { maximumFractionDigits: 2 });
-  const uz = [{ links: [0], zellen: ["Projektkonto Ende 2042, ohne IAB", `<span class="${klasse(r.projektEnde)}">${eur(r.projektEnde, true)}</span>`] }];
+  const uz = [{ links: [0], zellen: ["Projekt ohne IAB, 2042", `<span class="${klasse(r.projektEnde)}">${eur(r.projektEnde, true)}</span>`] }];
   if (p.iab) {
-    uz.push({ links: [0], zellen: [`IAB 2024: nicht geforderte Nachzahlung, Anteil ${a} %, kein Geldeingang`, eur(r.iabNgn, true)] });
-    uz.push({ links: [0], zellen: [`IAB 2024: Erstattung, Anteil ${a} %`, eur(r.iabErst, true)] });
+    uz.push({ links: [0], zellen: [`IAB Nachzahlung, ${a} %`, eur(r.iabNgn, true)] });
+    uz.push({ links: [0], zellen: [`IAB Erstattung, ${a} %`, eur(r.iabErst, true)] });
   }
   $("tUeberleitung").innerHTML = tabelle(["Posten", "Betrag"], uz, ["Gesamtergebnis", eur(r.endstand, true)]);
 
