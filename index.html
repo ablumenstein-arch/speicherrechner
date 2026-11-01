@@ -430,6 +430,14 @@ function rechne(eingabe) {
 }
 /*MODELL-ENDE*/
 
+// IAB-Werte aus dem Link übernehmen: #iab=IAB gesamt;IAB Projekt;Nachzahlung ohne IAB;Erstattung
+(function () {
+  const m = /iab=([\d.;]+)/.exec(decodeURIComponent(location.hash || ""));
+  if (!m) return;
+  const w = m[1].split(";").map(Number);
+  if (w.length === 4 && w.every(isFinite)) Object.assign(STANDARD, { iabGesamt: w[0], iabProjekt: w[1], ngn: w[2], erst: w[3] });
+})();
+
 // ---------- Oberfläche ----------
 const $ = id => document.getElementById(id);
 const FELDER = { iabGesamt: 0, iabProjekt: 0, ngn: 2, erst: 2, zusatz: 0, bedarf: 0, zins: 2, rateVoll: 2, quote: 1, ertrag: 0, kaufpreis: 0, nd: 0, sonder: 0, degSatz: 0, steuer: 2, herab: 0 };
