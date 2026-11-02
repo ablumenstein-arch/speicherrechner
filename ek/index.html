@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="de">
+<title>Speicherrechner Gelsenkirchen EK-Quote</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: Datenblatt-Rechner. Eingaben als feste Spalte links, Ergebnisse rechts; auf dem Handy untereinander. */
+:root {
+  --bg: #edf2f5;
+  --panel: #ffffff;
+  --ink: #13222d;
+  --muted: #586a77;
+  --line: #d3dde4;
+  --accent: #1f5f8b;
+  --accent-soft: #e2edf5;
+  --pos: #18794e;
+  --pos-soft: #e1f2e8;
+  --neg: #b42318;
+  --neg-soft: #fbe8e6;
+  --gold: #b7791f;
+  --zweit: #9fb3c2;
+  --steuer: #6b4fa0;
+  --f-text: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-head: "IBM Plex Sans Condensed", "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e161c; --panel: #15212a; --ink: #e3ebf0; --muted: #93a5b2; --line: #283845;
+    --accent: #72b2df; --accent-soft: #1a3245; --pos: #4cc38a; --pos-soft: #133427;
+    --neg: #f07a6e; --neg-soft: #3b1f1b; --gold: #e0b25a; --zweit: #4d6475; --steuer: #a991d8; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e161c; --panel: #15212a; --ink: #e3ebf0; --muted: #93a5b2; --line: #283845;
+  --accent: #72b2df; --accent-soft: #1a3245; --pos: #4cc38a; --pos-soft: #133427;
+  --neg: #f07a6e; --neg-soft: #3b1f1b; --gold: #e0b25a; --zweit: #4d6475; --steuer: #a991d8; color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--f-text); font-size: 15px; line-height: 1.45; }
+table, input, select, button { font: inherit; color: inherit; }
+h1, h2, h3 { font-family: var(--f-head); font-weight: 600; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+
+.seite {
+  max-width: 1340px; margin: 0 auto; display: grid; gap: 20px;
+  padding-block: 24px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.kopf { display: grid; gap: 4px; }
+.eyebrow { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.kopf h1 { font-size: 30px; line-height: 1.15; }
+.kopf .datenzeile { color: var(--muted); font-size: 14px; }
+
+.raster { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 920px) { .raster { grid-template-columns: minmax(0, 1fr); } }
+
+aside {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 16px; display: grid; gap: 18px;
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+  max-height: calc(100vh - 24px); overflow-y: auto;
+}
+@media (max-width: 920px) { aside { position: static; max-height: none; } }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+fieldset[disabled] .feld { opacity: .45; }
+legend { font-family: var(--f-head); font-weight: 600; font-size: 15px; color: var(--accent); padding: 0; margin-bottom: 6px; }
+.feld { display: grid; grid-template-columns: minmax(0, 1fr) 132px; gap: 10px; align-items: center; }
+.feld label { font-size: 14px; }
+.eingabe { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+.eingabe input, .eingabe select {
+  width: 100%; min-width: 0; border: 0; background: transparent; padding: 5px 6px; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.eingabe select { text-align: left; }
+.eingabe i { font-style: normal; color: var(--muted); padding-right: 8px; font-size: 13px; }
+.eingabe:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+input[aria-invalid="true"] { color: var(--neg); }
+.eingabe input:focus, .eingabe select:focus { outline: none; }
+.hinweis { font-size: 12.5px; color: var(--muted); }
+.rate-aktuell { font-size: 14px; font-weight: 600; color: var(--accent); background: var(--accent-soft); border-radius: 6px; padding: 6px 10px; }
+.schalter { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.schalter input { width: 16px; height: 16px; accent-color: var(--accent); }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.knoepfe { display: flex; flex-wrap: wrap; gap: 6px; }
+.quote { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.quote button { font-family: var(--f-head); font-weight: 600; font-size: 16px; padding: 10px 0; }
+.quote button[aria-pressed="true"] { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+button {
+  border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 5px 10px;
+  cursor: pointer; font-size: 13.5px;
+}
+button:hover { border-color: var(--accent); color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button.haupt { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+button.haupt:hover { color: var(--panel); opacity: .9; }
+
+main { display: grid; gap: 20px; min-width: 0; }
+.karte { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.karte h2 { font-size: 19px; }
+.ergebnis { display: grid; gap: 4px; }
+.ergebnis .gross { font-family: var(--f-head); font-size: 44px; line-height: 1.05; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ergebnis .vergleich { color: var(--muted); font-size: 14px; }
+
+.kennzahlen { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .kennzahlen { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.kz { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; display: grid; gap: 2px; align-content: start; }
+.kz .lbl { font-size: 12.5px; color: var(--muted); }
+.kz .wert { font-family: var(--f-head); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.kz .zusatz { font-size: 12.5px; color: var(--muted); }
+.pos { color: var(--pos); }
+.neg { color: var(--neg); }
+
+.warnung { background: var(--neg-soft); color: var(--ink); border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+
+.diagramm svg { width: 100%; height: auto; display: block; }
+.diagramm text { fill: var(--muted); font-size: 11px; font-family: var(--f-text); }
+.diagramm .gitter { stroke: var(--line); stroke-width: 1; }
+.diagramm .null { stroke: var(--muted); stroke-width: 1; }
+.diagramm .balken-pos { fill: var(--pos); }
+.diagramm .balken-neg { fill: var(--neg); }
+.diagramm .wertlabel { fill: var(--ink); font-weight: 600; }
+
+.tabelle { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+th, td { padding: 4px 5px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+th:first-child, td:first-child { padding-left: 0; width: 1%; }
+th:nth-child(2), td:nth-child(2) { border-left: 1px solid var(--line); }
+@media (max-width: 640px) { .karte { padding: 10px 8px; } main { gap: 12px; } }
+th { font-weight: 600; font-size: 12.5px; color: var(--muted); vertical-align: bottom; white-space: normal; }
+th:first-child, td:first-child, .links { text-align: left; }
+tr.summe td { font-weight: 600; border-top: 2px solid var(--ink); border-bottom: 0; }
+tr.sonder td { background: var(--accent-soft); }
+tr.tief td:last-child { font-weight: 600; }
+.fuss { font-size: 13px; color: var(--muted); }
+ul.annahmen { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: 14px; }
+footer { font-size: 12.5px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .ergebnis .gross { transition: color .2s; } }
+
+/* Diagramme (Chart.js) */
+.flaeche { position: relative; height: 320px; min-width: 0; }
+@media (max-width: 640px) { .flaeche { height: 280px; } }
+.unter { color: var(--muted); font-size: 14px; }
+.diagramme { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.diagramme > .karte { grid-template-rows: auto 1fr auto; }
+@supports (grid-template-rows: subgrid) {
+  .diagramme { grid-template-rows: auto auto auto; }
+  .diagramme > .karte { grid-row: span 3; grid-template-rows: subgrid; }
+}
+@media (max-width: 1240px) {
+  .diagramme { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .diagramme > .karte { grid-row: auto; grid-template-rows: auto auto auto; }
+}
+.diagramme .unter { align-self: start; }
+
+/* Personenwahl und Reiter */
+[hidden] { display: none !important; }
+.kopfzeile { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px 20px; flex-wrap: wrap; }
+.person { display: inline-grid; grid-template-columns: repeat(2, minmax(0, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; }
+.person button { border: 0; background: none; color: var(--muted); padding: 6px 14px; text-align: left; border-radius: 7px; display: grid; justify-items: start; line-height: 1.25; font-weight: 600; font-size: 14px; }
+.person button small { font-weight: 400; font-size: 11.5px; }
+.person button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+.person button[aria-pressed="true"]:hover { color: var(--panel); }
+.kacheln { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .kacheln { grid-template-columns: minmax(0, 1fr); } }
+.kachel { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; color: var(--ink); }
+.kachel:hover { border-color: var(--accent); color: var(--ink); }
+.kachel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.kachel[aria-selected="true"] { border: 2px solid var(--accent); background: var(--accent-soft); padding: 11px; }
+.kachel .ic { width: 40px; height: 40px; border-radius: 9px; background: var(--accent-soft); display: grid; place-items: center; }
+.kachel[aria-selected="true"] .ic { background: var(--accent); }
+.kachel .ic svg { width: 22px; height: 22px; fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.kachel[aria-selected="true"] .ic svg { stroke: var(--panel); }
+.kachel .t { display: block; font-family: var(--f-head); font-weight: 600; font-size: 16px; }
+.kachel .u { display: block; font-size: 12.5px; color: var(--muted); }
+.kachel .anzahl { font-size: 12px; font-weight: 600; background: var(--gold); color: var(--panel); border-radius: 99px; padding: 2px 8px; white-space: nowrap; }
+.stapel { display: grid; gap: 20px; min-width: 0; }
+.kennzahlen.vier { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 720px) { .kennzahlen.vier { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.zwei { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+@media (max-width: 760px) { .zwei { grid-template-columns: minmax(0, 1fr); } }
+.steck th, .steck td { text-align: left; white-space: normal; vertical-align: top; }
+.steck td:first-child, .steck th:first-child { width: auto; }
+.steck th:nth-child(2), .steck td:nth-child(2) { border-left: 0; }
+.steck td.r { text-align: right; }
+.steck td.status { width: 1%; text-align: center; }
+.quelle { font-size: 12.5px; color: var(--muted); }
+.ort { display: flex; gap: 12px; align-items: center; }
+.pin { width: 44px; height: 44px; flex: none; border-radius: 50%; background: var(--accent-soft); display: grid; place-items: center; }
+.pin svg { width: 22px; height: 22px; fill: var(--accent); }
+a { color: var(--accent); }
+.legende { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); align-items: center; }
+.gruppe h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 12px 0 4px; }
+.dok { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto auto; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.dok .ic { width: 34px; height: 40px; border-radius: 4px; background: var(--accent-soft); color: var(--accent); font: 600 10px var(--f-head); display: grid; place-items: end center; padding-bottom: 5px; }
+.dok .n { font-weight: 500; }
+.dok .m { font-size: 12.5px; color: var(--muted); }
+.stufe { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 99px; white-space: nowrap; }
+.s-off { background: var(--pos-soft); color: var(--pos); }
+.s-sp { background: var(--accent-soft); color: var(--accent); }
+a.oeffnen { font-weight: 600; font-size: 13px; border: 1px solid var(--accent); border-radius: 6px; padding: 4px 10px; text-decoration: none; white-space: nowrap; }
+a.oeffnen:hover { background: var(--accent-soft); }
+a.oeffnen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) {
+  .dok { grid-template-columns: 34px minmax(0, 1fr) auto; }
+  .dok .stufe { grid-column: 2; justify-self: start; }
+  .dok a.oeffnen { grid-column: 3; grid-row: 1 / span 2; }
+}
+</style>
+
+<div class="seite">
+  <div class="kopfzeile">
+    <header class="kopf">
+      <p class="eyebrow">Rechner · Speicher-Kraftwerk · 1 Einheit · <span id="personName">Oliver Mertins</span></p>
+      <h1>Speicher Gelsenkirchen</h1>
+      <p class="datenzeile">Kaufpreis 132.500 € netto · Betrieb BauMit, Auszahlung 74 % der Erlöse · Erlöse 2027 bis 2041 laut Prognose des Verkäufers · <span id="iabHerkunft">IAB-Werte bitte selbst eintragen</span></p>
+    </header>
+    <div class="person" role="group" aria-label="Person wählen">
+      <button type="button" id="personA" data-person="a" aria-pressed="false">Alexander Blumenstein<small>IAB 2023</small></button>
+      <button type="button" id="personO" data-person="o" aria-pressed="true">Oliver Mertins<small>IAB 2024</small></button>
+    </div>
+  </div>
+
+  <nav class="kacheln" role="tablist" aria-label="Bereiche">
+    <button type="button" class="kachel" role="tab" id="tabRechner" aria-selected="true" aria-controls="pRechner">
+      <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 11h2M12 11h2M8 15h2M12 15h2M8 18h2M12 18h4"/></svg></span>
+      <span><span class="t">Rechner</span><span class="u">Ergebnis, Konto, Steuer, Diagramme</span></span><span></span>
+    </button>
+    <button type="button" class="kachel" role="tab" id="tabProjekt" aria-selected="false" aria-controls="pProjekt">
+      <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M10 3V1.5h4V3M9 9h6M9 13h6M9 17h6"/></svg></span>
+      <span><span class="t">Projekt</span><span class="u">Standort, Technik, Garantien, Ablauf</span></span><span></span>
+    </button>
+    <button type="button" class="kachel" role="tab" id="tabUnterlagen" aria-selected="false" aria-controls="pUnterlagen">
+      <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v4h4M9 12h6M9 16h6"/></svg></span>
+      <span><span class="t">Unterlagen</span><span class="u">Datenblatt, Verträge, Berechnung</span></span><span class="anzahl" id="dokAnzahl">8 Dokumente</span>
+    </button>
+  </nav>
+
+  <section id="pRechner" role="tabpanel" aria-labelledby="tabRechner">
+  <div class="raster">
+    <aside>
+      <form id="eingaben" autocomplete="off">
+        <fieldset id="ekFelder">
+          <legend>Eigenkapital</legend>
+          <div class="feld"><label for="iabGesamt">IAB <span class="iabJahr">2024</span> gesamt</label><span class="eingabe"><input id="iabGesamt" inputmode="decimal"><i>€</i></span></div>
+          <div class="feld"><label for="iabProjekt">davon IAB Gelsenkirchen</label><span class="eingabe"><input id="iabProjekt" inputmode="decimal"><i>€</i></span></div>
+          <p class="hinweis" id="anteilText"></p>
+
+          <div class="feld"><label for="ngn">1. Nachzahlung ohne IAB laut Bescheid</label><span class="eingabe"><input id="ngn" inputmode="decimal"><i>€</i></span></div>
+          <label class="schalter" hidden><input type="checkbox" id="ekNgn"> <span id="ekNgnText">als Eigenkapital einsetzen</span></label>
+
+          <div class="feld"><label for="erst">2. Erstattung Finanzamt laut Bescheid</label><span class="eingabe"><input id="erst" inputmode="decimal"><i>€</i></span></div>
+          <label class="schalter" hidden><input type="checkbox" id="ekErst"> <span id="ekErstText">als Eigenkapital einsetzen</span></label>
+
+          <div class="feld" hidden><label for="zusatz">3. Zusätzliches Eigenkapital</label><span class="eingabe"><input id="zusatz" inputmode="decimal" value="0"><i>€</i></span></div>
+          <input type="range" hidden id="ekRegler" min="0" max="135000" step="500" value="0" aria-label="Zusätzliches Eigenkapital als Regler">
+          <div class="feld"><label>Eigenkapitalquote</label></div>
+          <div class="quote" id="ekQuote" role="group" aria-label="Eigenkapitalquote">
+            <button type="button" data-q="10" aria-pressed="true">10 %</button>
+            <button type="button" data-q="20" aria-pressed="false">20 %</button>
+            <button type="button" data-q="30" aria-pressed="false">30 %</button>
+          </div>
+          <div class="knoepfe" id="ekKnoepfe" hidden>
+            <button type="button" data-ek="0">0 €</button>
+            <button type="button" data-ek="10000">10.000 €</button>
+            <button type="button" data-ek="20000">20.000 €</button>
+            <button type="button" data-ek="voll">Rest bis 100 %</button>
+          </div>
+          <p class="hinweis" id="ekText"></p>
+        </fieldset>
+
+        <fieldset>
+          <legend>Finanzierung</legend>
+          <div class="feld"><label for="bedarf">Finanzierungsbedarf</label><span class="eingabe"><input id="bedarf" inputmode="decimal"><i>€</i></span></div>
+          <div class="feld"><label for="zins">Sollzins</label><span class="eingabe"><input id="zins" inputmode="decimal"><i>%</i></span></div>
+          <div class="feld"><label for="rate">Monatsrate</label><span class="eingabe"><input id="rate" inputmode="decimal"><i>€</i></span></div>
+        </fieldset>
+      </form>
+
+      <fieldset form="eingaben">
+        <legend>Erlöse</legend>
+        <div class="feld"><label for="quote">Auszahlung an den Eigentümer</label><span class="eingabe"><input id="quote" inputmode="decimal"><i>%</i></span></div>
+        <div class="feld"><label for="ertrag">Erlöse gegenüber Prognose</label><span class="eingabe"><input id="ertrag" inputmode="decimal"><i>%</i></span></div>
+        <p class="hinweis">100 % entspricht der Wirtschaftlichkeitsprognose des Verkäufers. 74 % Auszahlung laut Servicevertrag § 5.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend>AfA</legend>
+        <div class="feld"><label for="kaufpreis">Kaufpreis netto</label><span class="eingabe"><input id="kaufpreis" inputmode="decimal"><i>€</i></span></div>
+        <div class="feld"><label for="methode">Methode</label><span class="eingabe"><select id="methode"><option value="linear">linear</option><option value="degressiv">degressiv</option></select></span></div>
+        <div class="feld"><label for="nd">Nutzungsdauer</label><span class="eingabe"><input id="nd" inputmode="decimal"><i>Jahre</i></span></div>
+        <div class="feld"><label for="sonder">Sonder-AfA 2026</label><span class="eingabe"><input id="sonder" inputmode="decimal"><i>%</i></span></div>
+        <div class="feld"><label for="degSatz">Satz degressiv</label><span class="eingabe"><input id="degSatz" inputmode="decimal"><i>%</i></span></div>
+        <p class="hinweis" id="afaText"></p>
+      </fieldset>
+
+      <fieldset>
+        <legend>Steuer</legend>
+        <div class="feld"><label for="steuer">Steuersatz auf den Gewinn</label><span class="eingabe"><input id="steuer" inputmode="decimal"><i>%</i></span></div>
+        <label class="schalter"><input type="checkbox" id="iab"> IAB <span class="iabJahr">2024</span> berücksichtigen</label>
+      </fieldset>
+
+      <fieldset id="iabFelder">
+        <legend>IAB <span class="iabJahr">2024</span></legend>
+        <div class="feld"><label for="herab">Abzug vom Kaufpreis für die AfA</label><span class="eingabe"><input id="herab" inputmode="decimal"><i>%</i></span></div>
+        <p class="hinweis" id="iabText"></p>
+      </fieldset>
+
+      <div class="knoepfe">
+        <button type="button" class="haupt" id="zuruecksetzen">Auf Ausgangswerte zurücksetzen</button>
+      </div>
+    </aside>
+
+    <main>
+      <section class="karte">
+        <div class="ergebnis">
+          <p class="eyebrow">Gesamtergebnis nach 15 Jahren mit IAB-Vorteil, Ende 2042</p>
+          <p class="gross" id="endstand">–</p>
+          <p class="vergleich" id="vergleich"></p>
+        </div>
+        <div class="kennzahlen" id="kennzahlen"></div>
+        <p class="warnung" id="warnung" hidden></p>
+      </section>
+
+      <section class="karte" id="kErgebnis">
+        <h2>Woher kommt das Ergebnis?</h2>
+        <p class="unter" id="cErgebnisText">Summen über 15 Jahre.</p>
+        <div class="flaeche"><canvas id="cErgebnis" aria-label="Balkendiagramm: Einnahmen, Bankraten, Steuer, IAB-Vorteil, Ergebnis"></canvas></div>
+      </section>
+
+      <div class="diagramme" id="kDiagramme">
+        <section class="karte">
+          <h2>Kontostand am Jahresende</h2>
+          <p class="unter">Beide Personen im Vergleich, inklusive IAB-Geld. Der Punkt markiert den tiefsten Stand.</p>
+          <div class="flaeche"><canvas id="cKonto" aria-label="Linien: Kontostand 2026 bis 2042"></canvas></div>
+        </section>
+        <section class="karte">
+          <h2>Jahr für Jahr</h2>
+          <p class="unter">Einnahmen nach oben, Bankrate und Steuer nach unten. Die Linie zeigt das Ergebnis im Jahr.</p>
+          <div class="flaeche"><canvas id="cJahr" aria-label="Balken: Einnahmen, Bankrate, Steuer je Jahr"></canvas></div>
+        </section>
+      </div>
+
+      <section class="karte" id="ersatzDiagramm" hidden>
+        <h2>Projektkonto am Jahresende, ohne IAB-Vorteil</h2>
+        <div class="diagramm" id="diagramm"></div>
+      </section>
+
+      <section class="karte">
+        <h2>Was kommt aufs Konto?</h2>
+        <div class="tabelle" id="tKonto"></div>
+        <p class="fuss">Abkürzungen: EK = Eigenkapital · EK Nachz. = EK aus nicht geforderter Nachzahlung · EK Erst. = EK aus Erstattung · EK zus. = zusätzliches EK</p>
+        <p class="fuss">Projektkonto ohne IAB-Vorteil. Ergebnis im Jahr = Einnahmen − Bankrate − Steuer bezahlt. Steuer + ist eine Nachzahlung, − eine Erstattung. Die Steuer eines Jahres wird im Folgejahr bezahlt oder erstattet. Je Monat = Ergebnis im Jahr geteilt durch 12.</p>
+        <h3>Überleitung zum Gesamtergebnis</h3>
+        <div class="tabelle" id="tUeberleitung"></div>
+        <p class="fuss">Der IAB-Vorteil <span class="iabJahr">2024</span> entsteht aus dem Steuerbescheid <span class="iabJahr">2024</span> und wird nur einmal gezählt. Die nicht geforderte Nachzahlung ist kein Geldeingang: Dieser Betrag musste nicht gezahlt werden. Wird Eigenkapital aus der Erstattung bezahlt, steht es oben als Abgang im Projektkonto und der IAB-Vorteil nur hier.</p>
+      </section>
+
+      <section class="karte">
+        <h2>Was ist zu versteuern?</h2>
+        <div class="tabelle" id="tSteuer"></div>
+        <p class="fuss">Steuerpflichtiger Gewinn = Einnahmen − Zinsen − AfA. Die Tilgung mindert den Gewinn nicht. Ein Verlust wird mit dem übrigen Einkommen verrechnet und führt zu einer Erstattung.</p>
+      </section>
+
+      <section class="karte">
+        <h2>Darlehen</h2>
+        <div class="tabelle" id="tDarlehen"></div>
+        <p class="fuss">Auszahlung 28.12.2026, erste Rate 25.01.2027. Zinsen nach der deutschen Methode 30/360, verrechnet zum Quartalsende. Die Zinsen 2026 werden dem Darlehen zugeschlagen.</p>
+      </section>
+
+      <section class="karte">
+        <h2>Annahmen</h2>
+        <ul class="annahmen">
+          <li>Einnahmen 2027 bis 2041: Bruttoerlöse laut Wirtschaftlichkeitsprognose des Verkäufers, davon die eingestellte Auszahlungsquote.</li>
+          <li>AfA ab November 2026. Sonder-AfA nach § 7g Abs. 5 EStG voll im Jahr 2026. Ab 2031 wird der Restwert über die Restnutzungsdauer verteilt, § 7a Abs. 9 EStG.</li>
+          <li>Degressive AfA ist für Anschaffungen von Juli 2025 bis Dezember 2027 mit höchstens 30 % möglich.</li>
+          <li>Der IAB mindert die AfA-Grundlage um den eingestellten Prozentsatz, § 7g Abs. 2 EStG. Er mindert sie höchstens um den IAB, der für Gelsenkirchen gebildet wurde. Die IAB-Beträge aus dem Bescheid <span class="iabJahr">2024</span> fließen 2026 zu.</li>
+          <li>Eigenkapital wird 2026 eingesetzt und senkt das Darlehen. Bei 100 % Eigenkapital gibt es kein Darlehen.</li>
+          <li>Nicht enthalten: Einrichtungsgebühr, außerplanmäßige Reparaturen, Umsatzsteuer, Bereitstellungsprovision, Erlöse und Restwert nach 2041.</li>
+        </ul>
+      </section>
+      <footer>Stand 01.11.2026 · Modellrechnung · keine Steuerberatung</footer>
+    </main>
+  </div>
+  </section>
+
+  <section id="pProjekt" class="stapel" role="tabpanel" aria-labelledby="tabProjekt" hidden>
+    <div class="kennzahlen vier">
+      <div class="kz"><span class="lbl">Kaufpreis netto</span><span class="wert" id="pjKaufpreis">132.500 €</span><span class="zusatz">Kaufvertrag BauMit</span></div>
+      <div class="kz"><span class="lbl">Leistung</span><span class="wert">125 kW</span><span class="zusatz">261,2 kWh Kapazität</span></div>
+      <div class="kz"><span class="lbl">IAB</span><span class="wert" id="pjIab">2024</span><span class="zusatz" id="pjIabText">Steuerbescheid 2024</span></div>
+      <div class="kz"><span class="lbl">Gesamtergebnis 2042</span><span class="wert" id="pjErgebnis">–</span><span class="zusatz">aus dem Rechner, mit IAB-Vorteil</span></div>
+    </div>
+
+    <div class="zwei">
+      <section class="karte">
+        <h2>Standort</h2>
+        <div class="ort">
+          <div class="pin"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></div>
+          <div>Magdeburger Str. 16B<br>45881 Gelsenkirchen<br><a href="https://www.openstreetmap.org/search?query=Magdeburger%20Str.%2016B%2045881%20Gelsenkirchen" target="_blank" rel="noopener">Auf der Karte öffnen</a></div>
+        </div>
+        <table class="steck">
+          <tr><td>Cluster</td><td class="r">8 Module, 1 MW, 2,1 MWh</td></tr>
+          <tr><td>Netzanschluss</td><td class="r">gemeinsam für alle Module</td></tr>
+          <tr><td>Betriebsführung</td><td class="r">BauMit Immobilienservice GmbH</td></tr>
+        </table>
+        <p class="quelle">Quelle: Datenblatt Gelsenkirchen, Seite 3</p>
+      </section>
+
+      <section class="karte">
+        <h2>Technik je Modul</h2>
+        <table class="steck">
+          <tr><td>Modell</td><td class="r">AlphaESS STORION-LC-TB125</td></tr>
+          <tr><td>Batterietyp</td><td class="r">LiFePO4</td></tr>
+          <tr><td>Wirkungsgrad</td><td class="r">90,6 %</td></tr>
+          <tr><td>Zyklen</td><td class="r">≥ 8.000 bis 70 % Restkapazität</td></tr>
+          <tr><td>Kühlung</td><td class="r">Flüssigkühlung</td></tr>
+          <tr><td>Alterung</td><td class="r">2 % im Jahr</td></tr>
+        </table>
+        <p class="quelle">Quelle: Datenblatt Gelsenkirchen, Seiten 4 und 5</p>
+      </section>
+
+      <section class="karte">
+        <h2>Absicherung</h2>
+        <table class="steck">
+          <thead><tr><th>Posten</th><th>Dauer</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>Produktgarantie</td><td>10 Jahre</td><td class="status">✅</td></tr>
+            <tr><td>Leistungsgarantie 70 %</td><td>10 Jahre</td><td class="status">✅</td></tr>
+            <tr><td>Ersatzteile</td><td>15 Jahre</td><td class="status">✅</td></tr>
+            <tr><td>Elektronik- und Ertragsausfallversicherung</td><td>laufend</td><td class="status">✅</td></tr>
+          </tbody>
+        </table>
+        <p class="quelle">Quelle: Datenblatt Gelsenkirchen, Seiten 6 und 7</p>
+      </section>
+
+      <section class="karte">
+        <h2>Ablauf <span id="pjAblaufName">Oliver Mertins</span></h2>
+        <table class="steck">
+          <thead><tr><th>Schritt</th><th>Datum</th><th>Status</th></tr></thead>
+          <tbody id="pjAblauf"></tbody>
+        </table>
+        <p class="quelle">Bankraten aus dem Rechner, sie ändern sich mit den Eingaben</p>
+      </section>
+    </div>
+  </section>
+
+  <section id="pUnterlagen" role="tabpanel" aria-labelledby="tabUnterlagen" hidden>
+    <div class="karte">
+      <div class="legende">
+        <span><span class="stufe s-off">öffentlich</span> für jeden mit dem Link zum Rechner</span>
+        <span><span class="stufe s-sp">SharePoint</span> nur mit Anmeldung bei MobaGroup</span>
+      </div>
+
+      <div class="gruppe">
+        <h3>Projekt · für beide</h3>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Datenblatt Gelsenkirchen</div><div class="m">BauMit · 8 Seiten · 633 KB</div></div><span class="stufe s-off">öffentlich</span><a class="oeffnen" target="_blank" rel="noopener" href="https://ablumenstein-arch.github.io/speicherrechner/unterlagen/01_Datenblatt_Gelsenkirchen.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Investorenbriefing BauMit</div><div class="m">BauMit · 9 Seiten · 743 KB</div></div><span class="stufe s-off">öffentlich</span><a class="oeffnen" target="_blank" rel="noopener" href="https://ablumenstein-arch.github.io/speicherrechner/unterlagen/02_Investorenbriefing_BauMit.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Wirtschaftlichkeitsprognose</div><div class="m">BauMit · 1 Seite · 91 KB</div></div><span class="stufe s-off">öffentlich</span><a class="oeffnen" target="_blank" rel="noopener" href="https://ablumenstein-arch.github.io/speicherrechner/unterlagen/03_Wirtschaftlichkeitsprognose.pdf">Öffnen</a></div>
+      </div>
+
+      <div class="gruppe" data-nur="a" hidden>
+        <h3>Verträge Alexander Blumenstein</h3>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Kaufvertrag</div><div class="m">13 Seiten · 813 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/11_Kaufvertrag_Alexander_Blumenstein.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Servicevertrag</div><div class="m">14 Seiten · 951 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/12_Servicevertrag_Alexander_Blumenstein.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Unterpachtvertrag</div><div class="m">6 Seiten · 613 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/13_Unterpachtvertrag_Alexander_Blumenstein.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Berechnung 15 Jahre, IAB 2023</div><div class="m">Stand 01.11.2026</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Gelsenkirchen%20Speicher%20Blumenstein%2015%20Jahre%202026-11-01.pdf">Öffnen</a></div>
+      </div>
+
+      <div class="gruppe" data-nur="o">
+        <h3>Verträge Oliver Mertins</h3>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Kaufvertrag</div><div class="m">13 Seiten · 782 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/08_Kaufvertrag_Oliver_Mertins.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Servicevertrag</div><div class="m">14 Seiten · 978 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/09_Servicevertrag_Oliver_Mertins.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Unterpachtvertrag</div><div class="m">6 Seiten · 582 KB</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Freigabe_BESS_Gelsenkirchen_Tauberbischofsheim_Allgemein/01_Gelsenkirchen/10_Unterpachtvertrag_Oliver_Mertins.pdf">Öffnen</a></div>
+        <div class="dok"><div class="ic">PDF</div><div><div class="n">Berechnung 15 Jahre, IAB 2024</div><div class="m">Stand 01.11.2026</div></div><span class="stufe s-sp">SharePoint</span><a class="oeffnen" target="_blank" rel="noopener" href="https://asmgmbh2025.sharepoint.com/sites/MobaGroup2/Freigegebene%20Dokumente/1311_Claude%20Code/Code%20Ordner/IAB%20Finazierung/Gelsenkirchen%20Speicher%20Mertins%2015%20Jahre%202026-11-01.pdf">Öffnen</a></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+/*MODELL-START*/
+// Bruttoerlöse 2027 bis 2041 laut Wirtschaftlichkeitsprognose des Verkäufers (100 % EK)
+const PROGNOSE_BRUTTO = [29195, 29180, 28596, 28024, 27464, 26258, 25604, 24966, 24344, 23738, 22571, 21898, 21353, 20821, 20303];
+const START_ERLOES = 2027;
+const LETZTES_JAHR = 2042;
+
+// Ausgangswerte ohne persönliche Steuerdaten
+const STANDARD = {
+  bedarf: 135000, ekNgn: false, ekErst: false, zusatz: 0, zins: 4.95, rateVoll: 1700, rateModus: "anteilig",
+  quote: 74, ertrag: 100,
+  kaufpreis: 132500, nd: 10, sonder: 40, methode: "linear", degSatz: 30,
+  steuer: 42,
+  iab: true, herab: 50, ngn: 0, erst: 0, iabGesamt: 0, iabProjekt: 0
+};
+
+// Kaufmännisch auf Cent, bei exakt halbem Cent auf die gerade Ziffer (wie die Vergleichsrechnung)
+function rund2(x) {
+  const v = x * 100, f = Math.floor(v), d = v - f;
+  if (Math.abs(d - 0.5) < 1e-9) return (f % 2 === 0 ? f : f + 1) / 100;
+  return Math.round(v) / 100;
+}
+
+// Zinstage nach der deutschen Methode 30E/360
+function tage360(a, b) {
+  return (b.y - a.y) * 360 + (b.m - a.m) * 30 + (Math.min(b.d, 30) - Math.min(a.d, 30));
+}
+
+function monatsende(y, m) { return new Date(y, m, 0).getDate(); }
+
+// Annuitätendarlehen: Rate am 25., Zinsverrechnung zum Quartalsende, Schlussrate = Restschuld + aufgelaufene Zinsen
+function darlehen(betrag, zinsPct, rate) {
+  const jahre = {};
+  const j = y => (jahre[y] = jahre[y] || { rate: 0, zins: 0, rest: 0 });
+  if (betrag <= 0.004) return { jahre, ende: null, restEnde: 0 };
+  const r = zinsPct / 100;
+  let rest = betrag, offen = 0, zuletzt = { y: 2026, m: 12, d: 28 }, ende = null;
+  let y = 2026, m = 12;
+  j(2026).rest = rest;
+  while (y <= LETZTES_JAHR && rest > 0.004) {
+    if (y >= 2027) {
+      const t = { y, m, d: 25 };
+      offen += rest * r * tage360(zuletzt, t) / 360; zuletzt = t;
+      if (rest <= rate + 0.004) {
+        const z = rund2(offen);
+        j(y).rate += rund2(rest + z); j(y).zins += z;
+        rest = 0; offen = 0; ende = { y, m }; j(y).rest = 0;
+        break;
+      }
+      rest = rund2(rest - rate); j(y).rate += rate;
+    }
+    if (m % 3 === 0) {
+      const t = { y, m, d: monatsende(y, m) };
+      offen += rest * r * tage360(zuletzt, t) / 360; zuletzt = t;
+      const z = rund2(offen);
+      rest = rund2(rest + z); j(y).zins += z; offen = 0;
+    }
+    j(y).rest = rest;
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  return { jahre, ende, restEnde: rest };
+}
+
+// AfA ab November 2026; Sonder-AfA im Jahr 2026; ab 2031 Restwert über Restnutzungsdauer (§ 7a Abs. 9 EStG)
+function afaPlan(p) {
+  const plan = {};
+  // Herabsetzung nach § 7g Abs. 2 EStG höchstens in Höhe des IAB, der für Gelsenkirchen gebildet wurde
+  const abzugMax = p.kaufpreis * p.herab / 100;
+  const abzug = p.iab ? Math.min(abzugMax, Math.max(0, p.iabProjekt)) : 0;
+  const basis = p.kaufpreis - abzug;
+  const gesamtMon = Math.max(1, Math.round(p.nd * 12));
+  const mon2026 = 2;
+  const sonder = basis * p.sonder / 100;
+  const linearJahr = basis * 12 / gesamtMon;
+  const deg = p.degSatz / 100;
+  let rest = basis, genutzt = mon2026, fest7a = null, festWechsel = null;
+  const regulaer = p.methode === "degressiv" ? basis * deg * mon2026 / 12 : linearJahr * mon2026 / 12;
+  plan[2026] = Math.min(rest, sonder + regulaer);
+  rest -= plan[2026];
+  for (let y = 2027; rest > 0.005 && y <= 2080; y++) {
+    const offenMon = gesamtMon - genutzt;
+    let a;
+    if (offenMon <= 12) a = rest;
+    else if (sonder > 0 && y >= 2031) {
+      if (fest7a === null) fest7a = rest * 12 / offenMon;
+      a = fest7a;
+    } else if (p.methode === "degressiv") {
+      const lin = rest * 12 / offenMon;
+      if (festWechsel === null && rest * deg < lin) festWechsel = lin;  // Wechsel zur linearen AfA, § 7 Abs. 3 EStG
+      a = festWechsel !== null ? festWechsel : rest * deg;
+    } else a = linearJahr;
+    a = Math.min(a, rest);
+    plan[y] = a; rest -= a; genutzt += 12;
+  }
+  return { plan, basis, sonder };
+}
+
+function rechne(eingabe) {
+  const p = Object.assign({}, STANDARD, eingabe);
+  // Anteil Gelsenkirchen am IAB des Jahres = IAB Gelsenkirchen / IAB gesamt
+  const anteil = p.iabGesamt > 0 ? Math.min(1, Math.max(0, p.iabProjekt / p.iabGesamt)) : 0;
+  p.anteil = anteil * 100;
+  // Eigenkapital aus drei Bausteinen: nicht geforderte Nachzahlung, Erstattung, zusätzliches Geld
+  const ekTeile = [
+    { posten: "EK Nachz.", betrag: p.iab && p.ekNgn ? p.ngn * anteil : 0 },
+    { posten: "EK Erst.", betrag: p.iab && p.ekErst ? p.erst * anteil : 0 },
+    { posten: "EK zus.", betrag: Math.max(0, p.zusatz) }
+  ];
+  let frei = p.bedarf;
+  for (const t of ekTeile) { t.betrag = Math.min(t.betrag, frei); frei -= t.betrag; }
+  const ek = p.bedarf - frei;
+  const betrag = p.bedarf - ek;
+  const rate = betrag <= 0 ? 0 : (p.rateModus === "anteilig" ? rund2(p.rateVoll * betrag / p.bedarf) : p.rateVoll);
+  const dl = darlehen(betrag, p.zins, rate);
+  const afa = afaPlan(p);
+
+  const jahre = [];
+  let steuerVj = 0;
+  for (let y = 2026; y <= LETZTES_JAHR; y++) {
+    const i = y - START_ERLOES;
+    const ein = i >= 0 && i < PROGNOSE_BRUTTO.length ? PROGNOSE_BRUTTO[i] * p.ertrag / 100 * p.quote / 100 : 0;
+    const d = dl.jahre[y] || { rate: 0, zins: 0, rest: 0 };
+    const a = afa.plan[y] || 0;
+    const gewinn = ein - d.zins - a;
+    const steuer = y < LETZTES_JAHR ? gewinn * p.steuer / 100 : 0;
+    jahre.push({
+      jahr: y, einnahmen: ein, rate: d.rate, zins: d.zins, tilgung: d.rate ? d.rate - d.zins : 0, rest: d.rest,
+      afa: a, gewinn: y < LETZTES_JAHR ? gewinn : 0, steuer, steuerBezahlt: steuerVj,
+      ergebnis: ein - d.rate - steuerVj
+    });
+    steuerVj = steuer;
+  }
+
+  // Projektkonto ohne IAB: Eigenkapital als eigene Zeile, danach ein Betriebsjahr je Zeile.
+  // Der IAB-Vorteil steht getrennt in der Überleitung, damit er nicht doppelt neben dem Eigenkapital erscheint.
+  const zeilen = [];
+  for (const t of ekTeile) if (t.betrag > 0.004) zeilen.push({ jahr: 2026, posten: t.posten, ergebnis: -t.betrag, sonder: true });
+  for (const z of jahre) {
+    const leer = Math.abs(z.einnahmen) < 0.005 && Math.abs(z.rate) < 0.005 && Math.abs(z.steuerBezahlt) < 0.005;
+    if (leer) continue;
+    const posten = z.jahr === LETZTES_JAHR ? (z.rate > 0 ? "Darlehen und Steuer für " + (z.jahr - 1) : "Steuer für " + (z.jahr - 1)) : "Betrieb";
+    zeilen.push({ jahr: z.jahr, posten, einnahmen: z.einnahmen, rate: z.rate, steuerBezahlt: z.steuerBezahlt, ergebnis: z.ergebnis, jeMonat: z.ergebnis / 12 });
+  }
+  let stand = 0;
+  const standJahr = {};
+  for (const z of zeilen) { stand += z.ergebnis; z.stand = stand; standJahr[z.jahr] = stand; }
+  if (!(2026 in standJahr)) standJahr[2026] = 0;
+  for (let y = 2026, s = 0; y <= LETZTES_JAHR; y++) { if (y in standJahr) s = standJahr[y]; else standJahr[y] = s; }
+
+  const iabSumme = p.iab ? (p.ngn + p.erst) * anteil : 0;
+  let tief = { jahr: 2026, stand: standJahr[2026] || 0 };
+  for (let y = 2026; y <= LETZTES_JAHR; y++) if (standJahr[y] < tief.stand - 1e-9) tief = { jahr: y, stand: standJahr[y] };
+  const betriebsjahre = jahre.filter(z => z.jahr >= START_ERLOES && z.jahr < LETZTES_JAHR);
+  const schwach = betriebsjahre.reduce((a, z) => (z.ergebnis < a.ergebnis ? z : a), betriebsjahre[0]);
+  const nachDarlehen = betriebsjahre.filter(z => z.rate === 0 && (!dl.ende || z.jahr > dl.ende.y));
+
+  return {
+    p, ek, ekTeile, betrag, rate, dl, afa, jahre, zeilen, standJahr,
+    endstand: stand + iabSumme, projektEnde: stand, iabSumme, ohneIab: stand, tief,
+    iabNgn: p.iab ? p.ngn * anteil : 0, iabErst: p.iab ? p.erst * anteil : 0,
+    schwach, ueberschussMonat: nachDarlehen.length ? nachDarlehen.reduce((s, z) => s + z.ergebnis, 0) / nachDarlehen.length / 12 : null,
+    summe: {
+      einnahmen: jahre.reduce((s, z) => s + z.einnahmen, 0), rate: jahre.reduce((s, z) => s + z.rate, 0),
+      zins: jahre.reduce((s, z) => s + z.zins, 0), tilgung: jahre.reduce((s, z) => s + z.tilgung, 0),
+      afa: jahre.reduce((s, z) => s + z.afa, 0), gewinn: jahre.reduce((s, z) => s + z.gewinn, 0),
+      steuer: jahre.reduce((s, z) => s + z.steuer, 0), steuerBezahlt: jahre.reduce((s, z) => s + z.steuerBezahlt, 0)
+    }
+  };
+}
+/*MODELL-ENDE*/
+
+// Zwei Personen mit eigenem IAB-Jahr. Steuerwerte: IAB gesamt; IAB Gelsenkirchen; Nachzahlung ohne IAB; Erstattung
+/*PERSONEN-START*/
+const PERSONEN = {
+  a: { name: "Alexander Blumenstein", iabJahr: 2023, bescheid: "20.03.2026", steuer: 42, werte: null },
+  o: { name: "Oliver Mertins", iabJahr: 2024, bescheid: "07/2026", steuer: 42, werte: null }
+};
+/*PERSONEN-ENDE*/
+const BASIS = Object.assign({}, STANDARD);
+let person = "o";
+
+// Werte aus dem Link: #a=…;…;…;…&o=…;…;…;…&p=a  (alte Form #iab=… gilt für Oliver Mertins)
+(function () {
+  let h = "";
+  try { h = decodeURIComponent(location.hash || "").replace(/^#/, ""); } catch (e) { return; }
+  for (const teil of h.split("&")) {
+    const i = teil.indexOf("=");
+    if (i < 0) continue;
+    const k = teil.slice(0, i), v = teil.slice(i + 1);
+    if (k === "p" && v in PERSONEN) { person = v; continue; }
+    const wer = k === "iab" ? "o" : k;
+    if (!(wer in PERSONEN)) continue;
+    const w = v.split(";").map(Number);
+    if (w.length === 4 && w.every(x => isFinite(x) && x >= 0)) PERSONEN[wer].werte = { iabGesamt: w[0], iabProjekt: w[1], ngn: w[2], erst: w[3] };
+  }
+})();
+
+// ---------- Oberfläche ----------
+const $ = id => document.getElementById(id);
+const FELDER = { iabGesamt: 0, iabProjekt: 0, ngn: 2, erst: 2, zusatz: 0, bedarf: 0, zins: 2, quote: 1, ertrag: 0, kaufpreis: 0, nd: 0, sonder: 0, degSatz: 0, steuer: 2, herab: 0 };
+const GRENZEN = { quote: [0, 100], ertrag: [0, 300], sonder: [0, 40], degSatz: [0, 30], steuer: [0, 60], herab: [0, 50], nd: [1, 40], zins: [0, 20] };
+let rateManuell = null;
+let PDF_STAND = rechne({});
+
+function zahl(s) {
+  s = String(s).replace(/[€%\s ]/g, "").replace("−", "-");
+  if (s === "") return NaN;
+  if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
+  else if ((s.match(/\./g) || []).length > 1 || /^-?\d{1,3}\.\d{3}$/.test(s)) s = s.replace(/\./g, "");
+  return /^-?\d*\.?\d+$/.test(s) ? parseFloat(s) : NaN;
+}
+function zf(v, nk) {
+  const n = nk === 4 ? (Math.abs(v - Math.round(v * 100) / 100) < 1e-9 ? 2 : 4) : nk;
+  return v.toLocaleString("de-DE", { minimumFractionDigits: nk === 4 ? Math.min(n, 2) : n, maximumFractionDigits: n });
+}
+function eur(v, vz) {
+  if (v === null || v === undefined || Math.abs(v) < 0.5) return "–";
+  const s = Math.round(Math.abs(v)).toLocaleString("de-DE") + " €";
+  if (vz) return (v > 0 ? "+" : "−") + s;
+  return v < 0 ? "−" + s : s;
+}
+function klasse(v) { return Math.abs(v) < 0.5 ? "" : v > 0 ? "pos" : "neg"; }
+
+function lies() {
+  const e = {};
+  for (const k of Object.keys(FELDER)) {
+    const el = $(k); let v = zahl(el.value);
+    const g = GRENZEN[k];
+    const ok = isFinite(v) && v >= 0 && (!g || (v >= g[0] && v <= g[1]));
+    el.setAttribute("aria-invalid", ok ? "false" : "true");
+    e[k] = ok ? v : STANDARD[k];
+  }
+  e.ekNgn = false;
+  e.ekErst = false;
+  e.zusatz = Math.round(e.bedarf * EKQ / 100);
+  e.rateModus = rateManuell === null ? "anteilig" : "fest";
+  e.rateVoll = rateManuell === null ? STANDARD.rateVoll : rateManuell;
+  e.methode = $("methode").value;
+  e.iab = $("iab").checked;
+  return e;
+}
+function schreibe(e) {
+  for (const [k, nk] of Object.entries(FELDER)) $(k).value = zf(e[k], nk);
+  $("methode").value = e.methode; $("iab").checked = e.iab;
+  $("ekNgn").checked = e.ekNgn; $("ekErst").checked = e.ekErst;
+}
+
+function kennzahl(lbl, wert, zusatz, cls) {
+  return `<div class="kz"><span class="lbl">${lbl}</span><span class="wert ${cls || ""}">${wert}</span><span class="zusatz">${zusatz || ""}</span></div>`;
+}
+
+function tabelle(kopf, zeilen, summe) {
+  const th = kopf.map((h, i) => `<th${i < 2 && kopf.links === i ? ' class="links"' : ""}>${h}</th>`).join("");
+  const tr = zeilen.map(z => `<tr${z.cls ? ` class="${z.cls}"` : ""}>${z.zellen.map((c, i) => `<td${z.links && z.links.includes(i) ? ' class="links"' : ""}>${c}</td>`).join("")}</tr>`).join("");
+  const sm = summe ? `<tr class="summe">${summe.map((c, i) => `<td${i === 1 && summe.linksZweite ? ' class="links"' : ""}>${c}</td>`).join("")}</tr>` : "";
+  return `<table><thead><tr>${th}</tr></thead><tbody>${tr}${sm}</tbody></table>`;
+}
+
+function diagramm(r) {
+  const jahre = []; for (let y = 2026; y <= LETZTES_JAHR; y++) jahre.push({ jahr: y, stand: r.standJahr[y] });
+  const W = 720, H = 250, L = 64, R = 12, T = 16, B = 30;
+  const werte = jahre.map(j => j.stand);
+  let min = Math.min(0, ...werte), max = Math.max(0, ...werte);
+  const spanne = max - min || 1;
+  const roh = spanne / 5, pot = Math.pow(10, Math.floor(Math.log10(roh)));
+  const schritt = [1, 2, 2.5, 5, 10].map(f => f * pot).find(s => s >= roh);
+  min = Math.floor(min / schritt) * schritt; max = Math.ceil(max / schritt) * schritt;
+  const yS = v => T + (max - v) / (max - min) * (H - T - B);
+  const bw = (W - L - R) / jahre.length;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Kontostand am Jahresende 2026 bis 2042">`;
+  for (let v = min; v <= max + 1e-6; v += schritt) {
+    s += `<line class="${Math.abs(v) < 1e-6 ? "null" : "gitter"}" x1="${L}" x2="${W - R}" y1="${yS(v)}" y2="${yS(v)}"/>`;
+    s += `<text x="${L - 6}" y="${yS(v) + 4}" text-anchor="end">${Math.round(v / 1000).toLocaleString("de-DE")} T€</text>`;
+  }
+  jahre.forEach((j, i) => {
+    const x = L + i * bw + bw * 0.18, w = bw * 0.64;
+    const y0 = yS(0), y1 = yS(j.stand);
+    s += `<rect class="${j.stand >= 0 ? "balken-pos" : "balken-neg"}" x="${x}" y="${Math.min(y0, y1)}" width="${w}" height="${Math.max(1, Math.abs(y1 - y0))}" rx="2"><title>${j.jahr}: ${eur(j.stand, true)}</title></rect>`;
+    if (i % 2 === 0) s += `<text x="${x + w / 2}" y="${H - 10}" text-anchor="middle">${j.jahr}</text>`;
+    const markiert = j.jahr === LETZTES_JAHR || j.jahr === r.tief.jahr;
+    const anker = i === jahre.length - 1 ? "end" : i === 0 ? "start" : "middle";
+    const lx = anker === "end" ? x + w : anker === "start" ? x : x + w / 2;
+    if (markiert) s += `<text class="wertlabel" x="${lx}" y="${j.stand >= 0 ? y1 - 5 : y1 + 13}" text-anchor="${anker}">${eur(j.stand, true)}</text>`;
+  });
+  return s + "</svg>";
+}
+
+function zeichne() {
+  const e = lies();
+  const r = rechne(e);
+  const p = r.p;
+
+  // Hinweise in der Eingabespalte
+  $("ekRegler").max = String(p.bedarf);
+  $("ekRegler").value = String(Math.min(e.zusatz, p.bedarf));
+  const quote = p.bedarf ? r.ek / p.bedarf * 100 : 0;
+  const pz = p.anteil.toLocaleString("de-DE", { maximumFractionDigits: 2 });
+  $("anteilText").textContent = `Anteil Gelsenkirchen: ${pz} % (${eur(p.iabProjekt)} von ${eur(p.iabGesamt)})`;
+  $("ekNgnText").textContent = `als Eigenkapital einsetzen: ${eur(r.iabNgn || p.ngn * p.anteil / 100)} (${pz} %)`;
+  $("ekErstText").textContent = `als Eigenkapital einsetzen: ${eur(r.iabErst || p.erst * p.anteil / 100)} (${pz} %)`;
+  $("ekNgn").disabled = !p.iab; $("ekErst").disabled = !p.iab;
+  $("ekText").textContent = `Eigenkapital gesamt ${eur(r.ek)} · Darlehen ${eur(r.betrag)} · Eigenkapitalquote ${quote.toLocaleString("de-DE", { maximumFractionDigits: 1 })} %`;
+  // Eine Zeile für die Rate: folgt dem Darlehen automatisch, bis sie von Hand überschrieben wird
+  if (rateManuell === null && document.activeElement !== $("rate")) $("rate").value = zf(r.rate, 2);
+  $("afaText").textContent = `AfA-Grundlage ${eur(r.afa.basis)}${r.afa.sonder > 0 ? ` · Sonder-AfA ${eur(r.afa.sonder)}` : ""}`;
+  $("iabFelder").disabled = !p.iab;
+  $("iabText").textContent = p.iab ? `IAB-Vorteil ${PERSONEN[person].iabJahr} für Gelsenkirchen: ${eur(r.iabSumme)}, steht in der Überleitung.` : "IAB nicht berücksichtigt.";
+  $("degSatz").closest(".feld").style.opacity = p.methode === "degressiv" ? "" : ".45";
+
+  // Kopfzahl und Kennzahlen
+  $("endstand").textContent = eur(r.endstand, true);
+  $("endstand").className = "gross " + klasse(r.endstand);
+  const diff = r.endstand - PDF_STAND.endstand;
+  $("vergleich").textContent = Math.abs(diff) < 0.5 ? "Ausgangswerte." : `${eur(diff, true)} gegenüber den Ausgangswerten (${eur(PDF_STAND.endstand, true)}).`;
+  const k = [];
+  k.push(kennzahl("Projektkonto Ende 2042", eur(r.projektEnde, true), p.iab ? "ohne IAB-Vorteil von " + eur(r.iabSumme) : "IAB nicht berücksichtigt", klasse(r.projektEnde)));
+  // IAB-Geld (Erstattung, nicht geforderte Nachzahlung) steht als Reserve bereit, ob als EK eingesetzt oder nicht.
+  // Tiefster Stand inkl. IAB zeigt, ob diese Reserve die Zuschüsse deckt oder Geld von außen nötig ist.
+  if (r.iabSumme > 0.5) {
+    const reserve = r.tief.stand + r.iabSumme;
+    k.push(kennzahl("Tiefster Stand inkl. IAB", Math.abs(reserve) < 0.5 ? "0 €" : eur(reserve, true), (reserve >= -0.5 ? "IAB-Geld reicht, kein Geld von außen" : "fehlen " + eur(-reserve) + " von außen") + " · Jahresende " + r.tief.jahr, klasse(reserve)));
+  } else {
+    k.push(kennzahl("Tiefster Stand Projektkonto", eur(r.tief.stand, true), "ohne IAB · Jahresende " + r.tief.jahr, klasse(r.tief.stand)));
+  }
+  k.push(kennzahl("Eigenkapital", eur(r.ek), `Darlehen ${eur(r.betrag)}`));
+  k.push(kennzahl("Schwächstes Jahr je Monat", eur(r.schwach.ergebnis / 12, true), `${r.schwach.jahr}: ${eur(r.schwach.ergebnis, true)} im Jahr`, klasse(r.schwach.ergebnis)));
+  k.push(kennzahl("Nach dem Darlehen je Monat", r.ueberschussMonat === null ? "–" : eur(r.ueberschussMonat, true), r.ueberschussMonat === null ? "Darlehen läuft bis zum Ende" : "Durchschnitt der Jahre ohne Rate", r.ueberschussMonat === null ? "" : klasse(r.ueberschussMonat)));
+  k.push(kennzahl("Bankrate je Monat", r.betrag > 0 ? eur(r.rate) : "–", r.betrag > 0 ? (r.dl.ende ? `letzte Rate ${String(r.dl.ende.m).padStart(2, "0")}/${r.dl.ende.y}` : "nicht getilgt bis 2042") : "kein Darlehen"));
+  $("kennzahlen").innerHTML = k.join("");
+  const w = $("warnung");
+  if (r.dl.restEnde > 0.5) { w.hidden = false; w.textContent = `Das Darlehen ist Ende 2042 nicht getilgt. Restschuld ${eur(r.dl.restEnde)}; sie ist im Kontostand nicht abgezogen.`; }
+  else w.hidden = true;
+
+  diagrammeZeichnen(r);
+
+  // Konto
+  const kz = r.zeilen.map(z => ({
+    cls: (z.sonder ? "sonder" : "") + (z.jahr === r.tief.jahr && z === r.zeilen.filter(x => x.jahr === z.jahr).slice(-1)[0] ? " tief" : ""),
+    links: [1],
+    zellen: [z.jahr, z.posten, z.sonder ? "–" : eur(z.einnahmen), z.sonder ? "–" : eur(z.rate), z.sonder ? "–" : eur(z.steuerBezahlt, true),
+      `<span class="${klasse(z.ergebnis)}">${eur(z.ergebnis, true)}</span>`, z.sonder ? "" : `<span class="${klasse(z.jeMonat)}">${eur(z.jeMonat, true)}</span>`, eur(z.stand, true)]
+  }));
+  const kopfK = ["Jahr", "Posten", "Einnahmen", "Bankrate", "Steuer +/−", "Ergebnis im Jahr", "je Monat", "Kontostand"];
+  kopfK.links = 1;
+  const sK = ["Summe", "", eur(r.summe.einnahmen), eur(r.summe.rate), eur(r.summe.steuerBezahlt, true), eur(r.projektEnde, true), "", ""];
+  $("tKonto").innerHTML = tabelle(kopfK, kz, sK);
+
+  // Überleitung: Projektkonto + IAB-Vorteil = Gesamtergebnis
+  const a = p.anteil.toLocaleString("de-DE", { maximumFractionDigits: 2 });
+  const uz = [{ links: [0], zellen: ["Projekt ohne IAB, 2042", `<span class="${klasse(r.projektEnde)}">${eur(r.projektEnde, true)}</span>`] }];
+  if (p.iab) {
+    uz.push({ links: [0], zellen: [`IAB Nachzahlung, ${a} %`, eur(r.iabNgn, true)] });
+    uz.push({ links: [0], zellen: [`IAB Erstattung, ${a} %`, eur(r.iabErst, true)] });
+  }
+  $("tUeberleitung").innerHTML = tabelle(["Posten", "Betrag"], uz, ["Gesamtergebnis", eur(r.endstand, true)]);
+
+  // Steuer
+  const sz = r.jahre.filter(z => z.jahr < LETZTES_JAHR).map(z => ({
+    zellen: [z.jahr, eur(z.einnahmen), eur(z.zins), eur(z.afa), eur(z.gewinn), eur(z.steuer, true), z.jahr + 1]
+  }));
+  $("tSteuer").innerHTML = tabelle(["Jahr", "Einnahmen", "Zinsen", "AfA", "steuerpflichtiger Gewinn", "Steuer (+ Nachzahlung / − Erstattung)", "fällig im Jahr"], sz,
+    ["Summe", eur(r.summe.einnahmen), eur(r.summe.zins), eur(r.summe.afa), eur(r.summe.gewinn), eur(r.summe.steuer, true), ""]);
+
+  // Darlehen
+  if (r.betrag > 0) {
+    const dz = r.jahre.filter(z => z.jahr === 2026 || z.rate > 0).map(z => ({
+      zellen: [z.jahr, eur(z.rate), eur(z.zins), eur(z.tilgung), eur(z.rest)]
+    }));
+    $("tDarlehen").innerHTML = tabelle(["Jahr", "Raten", "Zinsen", "Tilgung", "Restschuld Jahresende"], dz,
+      ["Summe", eur(r.summe.rate), eur(r.summe.zins), eur(r.summe.tilgung), ""]);
+  } else {
+    $("tDarlehen").innerHTML = `<p class="fuss">Kein Darlehen: Die Einheit ist zu 100 % mit Eigenkapital bezahlt.</p>`;
+  }
+
+  // Reiter Projekt: Werte der gewählten Person aus der aktuellen Rechnung
+  const P = PERSONEN[person];
+  $("pjKaufpreis").textContent = eur(p.kaufpreis);
+  $("pjErgebnis").textContent = eur(r.endstand, true);
+  $("pjErgebnis").className = "wert " + klasse(r.endstand);
+  const mmjj = e => String(e.m).padStart(2, "0") + "/" + e.y;
+  const ablauf = [
+    ["IAB gebildet", String(P.iabJahr), true],
+    [`Steuerbescheid ${P.iabJahr} mit IAB`, P.bescheid, true],
+    ["Kaufvertrag", "2026", true],
+    ["Inbetriebnahme, Beginn AfA", "11/2026", false]
+  ];
+  if (r.betrag > 0) {
+    ablauf.push(["Erste Bankrate", "01/2027", false]);
+    ablauf.push(["Letzte Bankrate", r.dl.ende ? mmjj(r.dl.ende) : "nach 2042", false]);
+  }
+  ablauf.push(["Letzte Erlöse laut Prognose", String(START_ERLOES + PROGNOSE_BRUTTO.length - 1), false]);
+  $("pjAblauf").innerHTML = ablauf.map(([s, d, ok]) => `<tr><td>${s}</td><td>${d}</td><td class="status">${ok ? "✅" : "❌"}</td></tr>`).join("");
+}
+
+// ---------- Diagramme mit Chart.js; ohne Chart.js bleibt die einfache Grafik ----------
+let DIA = null;
+function farbe(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function kontoInklIab(r) { const a = []; for (let y = 2026; y <= LETZTES_JAHR; y++) a.push(r.standJahr[y] + r.iabSumme); return a; }
+// Andere Person immer mit ihren Ausgangswerten
+function andereRechnung(k) { const P = PERSONEN[k]; return rechne(Object.assign({}, BASIS, { steuer: P.steuer }, P.werte || {})); }
+
+function diagrammeAnlegen() {
+  if (DIA) DIA.forEach(c => c.destroy());
+  const F = { ink: farbe("--ink"), muted: farbe("--muted"), line: farbe("--line"), accent: farbe("--accent"), pos: farbe("--pos"), neg: farbe("--neg"), gold: farbe("--gold"), zweit: farbe("--zweit"), steuer: farbe("--steuer") };
+  Chart.defaults.font.family = getComputedStyle(document.body).fontFamily;
+  Chart.defaults.color = F.muted;
+  const tsd = v => Math.round(v / 1000).toLocaleString("de-DE") + " T€";
+  const achse = { grid: { color: F.line }, border: { display: false }, ticks: { callback: v => tsd(v) } };
+  const jahrAchse = { grid: { display: false }, border: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 9 } };
+  const basis = { maintainAspectRatio: false, animation: false };
+  const tip = { callbacks: { label: c => (c.dataset.label ? c.dataset.label + ": " : "") + eur(c.raw, true) } };
+  const jahre = []; for (let y = 2026; y <= LETZTES_JAHR; y++) jahre.push(y);
+  const ergebnis = new Chart($("cErgebnis"), {
+    type: "bar",
+    data: { labels: [], datasets: [{ data: [], vorzeichen: [], backgroundColor: [], borderRadius: 4, barPercentage: .62 }] },
+    options: { ...basis, layout: { padding: { top: 22 } }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => eur(c.dataset.vorzeichen[c.dataIndex], true) } } },
+      scales: { x: { grid: { display: false }, border: { display: false }, ticks: { color: F.ink } }, y: { ...achse, beginAtZero: true } } },
+    plugins: [{ id: "werte", afterDatasetsDraw(ch) {
+      const { ctx } = ch, d = ch.data.datasets[0];
+      const balken = ch.getDatasetMeta(0).data, a = ch.chartArea;
+      // Wenig Platz je Balken: Beträge in T€ und kleiner, damit sich nichts überlappt
+      const eng = balken.length && a.width / balken.length < 90;
+      ctx.save(); ctx.font = "600 " + (eng ? 11 : 13) + "px " + Chart.defaults.font.family; ctx.fillStyle = F.ink; ctx.textAlign = "center";
+      balken.forEach((b, i) => {
+        const v = d.vorzeichen[i];
+        const t = eng ? (v < 0 ? "−" : "+") + Math.round(Math.abs(v) / 1000).toLocaleString("de-DE") + " T€" : eur(v, true);
+        const halb = ctx.measureText(t).width / 2;
+        const x = Math.min(Math.max(b.x, a.left + halb), a.right - halb);  // nicht über den Rand hinaus
+        ctx.fillText(t, x, b.y - 6);
+      });
+      ctx.restore();
+    } }]
+  });
+  const konto = new Chart($("cKonto"), {
+    type: "line",
+    data: { labels: jahre, datasets: [
+      { label: "", data: [], borderColor: F.accent, backgroundColor: F.accent + "22", fill: "origin", borderWidth: 2.5, tension: .25, pointRadius: [], pointBackgroundColor: [] },
+      { label: "", data: [], borderColor: F.zweit, borderWidth: 1.5, borderDash: [5, 4], pointRadius: 0, tension: .25, fill: false }
+    ] },
+    options: { ...basis, interaction: { mode: "index", intersect: false }, plugins: { legend: { position: "bottom", labels: { boxWidth: 14, color: F.ink } }, tooltip: tip },
+      scales: { x: jahrAchse, y: { ...achse, beginAtZero: true } } }
+  });
+  const jahr = new Chart($("cJahr"), {
+    data: { labels: jahre, datasets: [
+      { type: "bar", label: "Einnahmen", data: [], backgroundColor: F.pos, stack: "s", borderRadius: 2 },
+      { type: "bar", label: "Bankrate", data: [], backgroundColor: F.neg, stack: "s", borderRadius: 2 },
+      { type: "bar", label: "Steuer", data: [], backgroundColor: F.steuer, stack: "s", borderRadius: 2 },
+      { type: "line", label: "Ergebnis im Jahr", data: [], borderColor: F.ink, backgroundColor: F.ink, borderWidth: 2, pointRadius: 2.5, tension: 0 }
+    ] },
+    options: { ...basis, interaction: { mode: "index", intersect: false }, plugins: { legend: { position: "bottom", labels: { boxWidth: 14, color: F.ink } }, tooltip: tip },
+      scales: { x: { ...jahrAchse, stacked: true }, y: { ...achse, stacked: true } } }
+  });
+  DIA = [ergebnis, konto, jahr];
+  DIA.F = F;
+}
+
+function diagrammeZeichnen(r) {
+  if (typeof Chart === "undefined") {
+    // Chart.js nicht geladen: leere Diagrammkarten ausblenden, einfache Grafik zeigen
+    $("kErgebnis").hidden = true; $("kDiagramme").hidden = true;
+    $("ersatzDiagramm").hidden = false; $("diagramm").innerHTML = diagramm(r); return;
+  }
+  if (!DIA) diagrammeAnlegen();
+  const F = DIA.F, [ergebnis, konto, jahr] = DIA;
+  // Balken ab null, Höhe = Betrag; Eigenkapital erscheint nur, wenn es eingesetzt wird
+  const posten = [["Einnahmen", r.summe.einnahmen, F.pos], ["Bankraten", -r.summe.rate, F.neg], ["Steuer", -r.summe.steuerBezahlt, F.steuer]];
+  if (r.ek > 0.5) posten.push(["Eigenkapital", -r.ek, F.zweit]);
+  if (r.iabSumme > 0.5) posten.push(["IAB-Vorteil", r.iabSumme, F.gold]);
+  posten.push(["Ergebnis 2042", r.endstand, F.accent]);
+  const d0 = ergebnis.data.datasets[0];
+  ergebnis.data.labels = posten.map(x => x[0]);
+  d0.data = posten.map(x => Math.abs(x[1]));
+  d0.vorzeichen = posten.map(x => x[1]);
+  d0.backgroundColor = posten.map(x => x[2]);
+  $("cErgebnisText").textContent = "Summen über 15 Jahre: Einnahmen − Bankraten − Steuer" + (r.ek > 0.5 ? " − Eigenkapital" : "") + (r.iabSumme > 0.5 ? " + IAB-Vorteil" : "") + " = Ergebnis.";
+  ergebnis.update();
+  // Kontostand: gewählte Person mit den aktuellen Eingaben, andere Person mit ihren Ausgangswerten
+  const andere = person === "a" ? "o" : "a";
+  const k1 = kontoInklIab(r), k2 = kontoInklIab(andereRechnung(andere));
+  const tiefI = k1.indexOf(Math.min(...k1));
+  const [l1, l2] = konto.data.datasets;
+  l1.label = PERSONEN[person].name;
+  l1.data = k1;
+  l1.pointRadius = k1.map((_, i) => i === tiefI || i === k1.length - 1 ? 5 : 0);
+  l1.pointBackgroundColor = k1.map((_, i) => i === tiefI ? F.gold : F.accent);
+  l2.label = PERSONEN[andere].name + ", Ausgangswerte";
+  l2.data = k2;
+  konto.update();
+  // Jahr für Jahr
+  const [e1, b1, s1, g1] = jahr.data.datasets;
+  e1.data = r.jahre.map(z => z.einnahmen);
+  b1.data = r.jahre.map(z => -z.rate);
+  s1.data = r.jahre.map(z => -z.steuerBezahlt);
+  g1.data = r.jahre.map(z => z.ergebnis);
+  jahr.update();
+}
+// Hell und dunkel: Diagramme mit den neuen Farben neu anlegen
+function farbwechsel() { if (DIA && typeof Chart !== "undefined") { diagrammeAnlegen(); zeichne(); } }
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", farbwechsel);
+new MutationObserver(farbwechsel).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+// Person wechseln: IAB-Jahr, Steuerwerte und Verträge der Person; übrige Eingaben auf Ausgangswerte
+function waehlePerson(k) {
+  person = k;
+  const P = PERSONEN[k];
+  // Steuersatz je Person, derzeit bei beiden 42 % (Vorgabe 01.11.2026)
+  Object.assign(STANDARD, BASIS, { steuer: P.steuer }, P.werte || {});
+  PDF_STAND = rechne({});
+  rateManuell = null;
+  schreibe(STANDARD);
+  document.querySelectorAll(".iabJahr").forEach(el => { el.textContent = P.iabJahr; });
+  document.querySelectorAll("[data-person]").forEach(b => b.setAttribute("aria-pressed", b.dataset.person === k ? "true" : "false"));
+  document.querySelectorAll("[data-nur]").forEach(el => { el.hidden = el.dataset.nur !== k; });
+  const dok = [...document.querySelectorAll("#pUnterlagen .dok")].filter(d => !d.closest("[data-nur]") || d.closest("[data-nur]").dataset.nur === k).length;
+  $("dokAnzahl").textContent = dok + " Dokumente";
+  $("personName").textContent = P.name;
+  $("pjAblaufName").textContent = P.name;
+  $("pjIab").textContent = P.iabJahr;
+  $("pjIabText").textContent = `Steuerbescheid ${P.iabJahr} · ${P.bescheid}`;
+  $("iabHerkunft").textContent = P.werte ? `IAB ${P.iabJahr} laut Steuerbescheid` : "IAB-Werte bitte selbst eintragen";
+  try {
+    const teile = location.hash.replace(/^#/, "").split("&").filter(t => t && !t.startsWith("p="));
+    teile.push("p=" + k);
+    history.replaceState(null, "", "#" + teile.join("&"));
+  } catch (e) { /* Link bleibt unverändert */ }
+  zeichne();
+}
+document.querySelectorAll("[data-person]").forEach(b => b.addEventListener("click", () => waehlePerson(b.dataset.person)));
+
+// Reiter Rechner, Projekt, Unterlagen
+const REITER = [["tabRechner", "pRechner"], ["tabProjekt", "pProjekt"], ["tabUnterlagen", "pUnterlagen"]];
+REITER.forEach(([t]) => $(t).addEventListener("click", () => {
+  REITER.forEach(([t2, p2]) => { $(t2).setAttribute("aria-selected", t2 === t ? "true" : "false"); $(p2).hidden = t2 !== t; });
+}));
+
+let EKQ = 10;
+$("ekQuote").addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  EKQ = Number(b.dataset.q);
+  $("ekQuote").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  zeichne();
+});
+function setzeEk(v) { $("zusatz").value = zf(Math.max(0, v), 0); zeichne(); }
+
+document.addEventListener("input", ev => {
+  if (ev.target.id === "rate") { const v = zahl(ev.target.value); rateManuell = isFinite(v) && v > 0 ? v : null; }
+  if (ev.target.id === "ekRegler") { $("zusatz").value = zf(Number(ev.target.value), 0); }
+  zeichne();
+});
+document.addEventListener("change", ev => {
+  const k = ev.target.id;
+  if (k in FELDER && ev.target.getAttribute("aria-invalid") !== "true") {
+    const v = zahl(ev.target.value); if (isFinite(v)) ev.target.value = zf(v, FELDER[k]);
+  }
+  zeichne();
+});
+$("ekKnoepfe").addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  if (b.dataset.ek !== "voll") { setzeEk(Number(b.dataset.ek)); return; }
+  const r = rechne(Object.assign(lies(), { zusatz: 0 }));
+  setzeEk(r.p.bedarf - r.ek);
+});
+$("zuruecksetzen").addEventListener("click", () => { rateManuell = null; schreibe(STANDARD); zeichne(); });
+$("eingaben").addEventListener("submit", ev => ev.preventDefault());
+
+waehlePerson(person);
+</script>
+</html>
