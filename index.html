@@ -1,5 +1,3 @@
-<!doctype html>
-<html lang="de">
 <title>Speicherrechner Gelsenkirchen neutral</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta charset="utf-8">
@@ -349,7 +347,7 @@ a.oeffnen:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px;
         <p class="fuss">Projektkonto ohne IAB-Vorteil. Ergebnis im Jahr = Einnahmen − Bankrate − Steuer bezahlt. Steuer + ist eine Nachzahlung, − eine Erstattung. Die Steuer eines Jahres wird im Folgejahr bezahlt oder erstattet. Je Monat = Ergebnis im Jahr geteilt durch 12.</p>
         <h3>Überleitung zum Gesamtergebnis</h3>
         <div class="tabelle" id="tUeberleitung"></div>
-        <p class="fuss">Der IAB-Vorteil <span class="iabJahr">2024</span> entsteht aus dem Steuerbescheid <span class="iabJahr">2024</span> und wird nur einmal gezählt. Die nicht geforderte Nachzahlung ist kein Geldeingang: Dieser Betrag musste nicht gezahlt werden. Wird Eigenkapital aus der Erstattung bezahlt, steht es oben als Abgang im Projektkonto und der IAB-Vorteil nur hier.</p>
+        <p class="fuss">Der IAB-Vorteil <span class="iabJahr">2024</span> entsteht aus dem Steuerbescheid <span class="iabJahr">2024</span> und wird nur einmal gezählt. Die nicht geforderte Nachzahlung ist kein Geldeingang: Dieser Betrag musste nicht gezahlt werden. Wird IAB-Geld als Eigenkapital eingesetzt, senkt es das Darlehen, belastet das Projektkonto aber nicht: Ohne IAB gäbe es dieses Geld nicht. Hier wird der eingesetzte Teil abgezogen, damit er nicht doppelt zählt.</p>
       </section>
 
       <section class="karte">
@@ -579,8 +577,8 @@ function rechne(eingabe) {
   p.anteil = anteil * 100;
   // Eigenkapital aus drei Bausteinen: nicht geforderte Nachzahlung, Erstattung, zusätzliches Geld
   const ekTeile = [
-    { posten: "EK Nachz.", betrag: p.iab && p.ekNgn ? p.ngn * anteil : 0 },
-    { posten: "EK Erst.", betrag: p.iab && p.ekErst ? p.erst * anteil : 0 },
+    { posten: "EK Nachz.", betrag: p.iab && p.ekNgn ? p.ngn * anteil : 0, iab: true },
+    { posten: "EK Erst.", betrag: p.iab && p.ekErst ? p.erst * anteil : 0, iab: true },
     { posten: "EK zus.", betrag: Math.max(0, p.zusatz) }
   ];
   let frei = p.bedarf;
@@ -611,7 +609,12 @@ function rechne(eingabe) {
   // Projektkonto ohne IAB: Eigenkapital als eigene Zeile, danach ein Betriebsjahr je Zeile.
   // Der IAB-Vorteil steht getrennt in der Überleitung, damit er nicht doppelt neben dem Eigenkapital erscheint.
   const zeilen = [];
-  for (const t of ekTeile) if (t.betrag > 0.004) zeilen.push({ jahr: 2026, posten: t.posten, ergebnis: -t.betrag, sonder: true });
+  // Eigenkapital aus IAB-Geld (Erstattung, nicht geforderte Nachzahlung) senkt das Darlehen, belastet das Projektkonto aber nicht:
+  // Ohne IAB gäbe es dieses Geld nicht (Wunsch Alexander 12.11.2026). Nur zusätzliches Eigenkapital ist ein Abgang.
+  for (const t of ekTeile) if (t.betrag > 0.004) {
+    if (t.iab) zeilen.push({ jahr: 2026, posten: t.posten + " " + Math.round(t.betrag).toLocaleString("de-DE") + " € aus IAB, belastet das Projekt nicht", ergebnis: 0, sonder: true });
+    else zeilen.push({ jahr: 2026, posten: t.posten, ergebnis: -t.betrag, sonder: true });
+  }
   for (const z of jahre) {
     const leer = Math.abs(z.einnahmen) < 0.005 && Math.abs(z.rate) < 0.005 && Math.abs(z.steuerBezahlt) < 0.005;
     if (leer) continue;
@@ -633,7 +636,10 @@ function rechne(eingabe) {
 
   return {
     p, ek, ekTeile, betrag, rate, dl, afa, jahre, zeilen, standJahr,
-    endstand: stand + iabSumme, projektEnde: stand, iabSumme, ohneIab: stand, tief,
+    // Eingesetztes IAB-Geld steckt schon im Projekt (weniger Darlehen) und zählt in der Überleitung nicht noch einmal
+    ekIab: ekTeile.filter(t => t.iab).reduce((s, t) => s + t.betrag, 0),
+    iabFrei: iabSumme - ekTeile.filter(t => t.iab).reduce((s, t) => s + t.betrag, 0),
+    endstand: stand + iabSumme - ekTeile.filter(t => t.iab).reduce((s, t) => s + t.betrag, 0), projektEnde: stand, iabSumme, ohneIab: stand, tief,
     iabNgn: p.iab ? p.ngn * anteil : 0, iabErst: p.iab ? p.erst * anteil : 0,
     schwach, ueberschussMonat: nachDarlehen.length ? nachDarlehen.reduce((s, z) => s + z.ergebnis, 0) / nachDarlehen.length / 12 : null,
     summe: {
@@ -789,11 +795,11 @@ function zeichne() {
   const diff = r.endstand - PDF_STAND.endstand;
   $("vergleich").textContent = Math.abs(diff) < 0.5 ? "Ausgangswerte." : `${eur(diff, true)} gegenüber den Ausgangswerten (${eur(PDF_STAND.endstand, true)}).`;
   const k = [];
-  k.push(kennzahl("Projektkonto Ende 2042", eur(r.projektEnde, true), p.iab ? "ohne IAB-Vorteil von " + eur(r.iabSumme) : "IAB nicht berücksichtigt", klasse(r.projektEnde)));
+  k.push(kennzahl("Projektkonto Ende 2042", eur(r.projektEnde, true), p.iab ? (r.ekIab > 0.5 ? "IAB-Geld " + eur(r.ekIab) + " als EK im Projekt, ohne Belastung" : "ohne IAB-Vorteil von " + eur(r.iabSumme)) : "IAB nicht berücksichtigt", klasse(r.projektEnde)));
   // IAB-Geld (Erstattung, nicht geforderte Nachzahlung) steht als Reserve bereit, ob als EK eingesetzt oder nicht.
   // Tiefster Stand inkl. IAB zeigt, ob diese Reserve die Zuschüsse deckt oder Geld von außen nötig ist.
-  if (r.iabSumme > 0.5) {
-    const reserve = r.tief.stand + r.iabSumme;
+  if (r.iabFrei > 0.5) {
+    const reserve = r.tief.stand + r.iabFrei;
     k.push(kennzahl("Tiefster Stand inkl. IAB", Math.abs(reserve) < 0.5 ? "0 €" : eur(reserve, true), (reserve >= -0.5 ? "IAB-Geld reicht, kein Geld von außen" : "fehlen " + eur(-reserve) + " von außen") + " · Jahresende " + r.tief.jahr, klasse(reserve)));
   } else {
     k.push(kennzahl("Tiefster Stand Projektkonto", eur(r.tief.stand, true), "ohne IAB · Jahresende " + r.tief.jahr, klasse(r.tief.stand)));
@@ -827,6 +833,7 @@ function zeichne() {
   if (p.iab) {
     uz.push({ links: [0], zellen: [`IAB Nachzahlung, ${a} %`, eur(r.iabNgn, true)] });
     uz.push({ links: [0], zellen: [`IAB Erstattung, ${a} %`, eur(r.iabErst, true)] });
+    if (r.ekIab > 0.5) uz.push({ links: [0], zellen: ["davon als Eigenkapital im Projekt", eur(-r.ekIab, true)] });
   }
   $("tUeberleitung").innerHTML = tabelle(["Posten", "Betrag"], uz, ["Gesamtergebnis", eur(r.endstand, true)]);
 
@@ -871,7 +878,7 @@ function zeichne() {
 // ---------- Diagramme mit Chart.js; ohne Chart.js bleibt die einfache Grafik ----------
 let DIA = null;
 function farbe(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
-function kontoInklIab(r) { const a = []; for (let y = 2026; y <= LETZTES_JAHR; y++) a.push(r.standJahr[y] + r.iabSumme); return a; }
+function kontoInklIab(r) { const a = []; for (let y = 2026; y <= LETZTES_JAHR; y++) a.push(r.standJahr[y] + r.iabFrei); return a; }
 // Andere Person immer mit ihren Ausgangswerten
 function andereRechnung(k) { const P = PERSONEN[k]; return rechne(Object.assign({}, BASIS, { steuer: P.steuer }, P.werte || {})); }
 
@@ -940,15 +947,16 @@ function diagrammeZeichnen(r) {
   const F = DIA.F, [ergebnis, konto, jahr] = DIA;
   // Balken ab null, Höhe = Betrag; Eigenkapital erscheint nur, wenn es eingesetzt wird
   const posten = [["Einnahmen", r.summe.einnahmen, F.pos], ["Bankraten", -r.summe.rate, F.neg], ["Steuer", -r.summe.steuerBezahlt, F.steuer]];
-  if (r.ek > 0.5) posten.push(["Eigenkapital", -r.ek, F.zweit]);
-  if (r.iabSumme > 0.5) posten.push(["IAB-Vorteil", r.iabSumme, F.gold]);
+  const ekZus = r.ek - r.ekIab;
+  if (ekZus > 0.5) posten.push(["Eigenkapital", -ekZus, F.zweit]);
+  if (r.iabFrei > 0.5) posten.push([r.ekIab > 0.5 ? "IAB-Vorteil, frei" : "IAB-Vorteil", r.iabFrei, F.gold]);
   posten.push(["Ergebnis 2042", r.endstand, F.accent]);
   const d0 = ergebnis.data.datasets[0];
   ergebnis.data.labels = posten.map(x => x[0]);
   d0.data = posten.map(x => Math.abs(x[1]));
   d0.vorzeichen = posten.map(x => x[1]);
   d0.backgroundColor = posten.map(x => x[2]);
-  $("cErgebnisText").textContent = "Summen über 15 Jahre: Einnahmen − Bankraten − Steuer" + (r.ek > 0.5 ? " − Eigenkapital" : "") + (r.iabSumme > 0.5 ? " + IAB-Vorteil" : "") + " = Ergebnis.";
+  $("cErgebnisText").textContent = "Summen über 15 Jahre: Einnahmen − Bankraten − Steuer" + (ekZus > 0.5 ? " − Eigenkapital" : "") + (r.iabFrei > 0.5 ? " + IAB-Vorteil" : "") + " = Ergebnis.";
   ergebnis.update();
   // Kontostand: gewählte Person mit den aktuellen Eingaben, andere Person mit ihren Ausgangswerten
   const andere = person === "a" ? "o" : "a";
@@ -1034,4 +1042,3 @@ $("eingaben").addEventListener("submit", ev => ev.preventDefault());
 
 waehlePerson(person);
 </script>
-</html>
