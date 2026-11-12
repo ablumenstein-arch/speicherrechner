@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speicherrechner Projekte</title>
+<style>
+/* Rahmen mit Projektauswahl; die beiden Rechner laufen unverändert darunter */
+:root { --bg: #edf2f5; --panel: #ffffff; --ink: #13222d; --muted: #586a77; --line: #d3dde4; --accent: #1f5f8b; --accent-soft: #e2edf5; }
+@media (prefers-color-scheme: dark) { :root { --bg: #0e161c; --panel: #15212a; --ink: #e3ebf0; --muted: #93a5b2; --line: #283845; --accent: #72b2df; --accent-soft: #1a3245; color-scheme: dark; } }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif; display: flex; flex-direction: column; }
+.leiste { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px max(16px, env(safe-area-inset-left, 0px)); background: var(--panel); border-bottom: 1px solid var(--line); }
+.leiste .titel { font-weight: 600; font-size: 15px; }
+.leiste .titel small { display: block; font-weight: 400; font-size: 12px; color: var(--muted); }
+.wahl { display: flex; gap: 6px; flex-wrap: wrap; }
+.wahl button { font: inherit; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 6px 14px; cursor: pointer; text-align: left; }
+.wahl button small { display: block; font-size: 11.5px; color: var(--muted); }
+.wahl button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--panel); }
+.wahl button[aria-pressed="true"] small { color: var(--panel); opacity: .85; }
+.wahl button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.entwurf { margin-left: auto; font-size: 12px; color: var(--muted); }
+iframe { flex: 1; width: 100%; border: 0; background: var(--bg); }
+</style>
+</head>
+<body>
+<div class="leiste">
+  <div class="titel">Speicherrechner<small>Batteriespeicher · zwei Projekte</small></div>
+  <div class="wahl" role="group" aria-label="Projekt wählen">
+    <button type="button" data-datei="index.html" aria-pressed="true">Gelsenkirchen<small>BauMit · 132.500 € netto</small></button>
+    <button type="button" data-datei="tauber.html" aria-pressed="false">Tauberbischofsheim<small>Tauber Energy · 154.659 € netto</small></button>
+  </div>
+  <span class="entwurf">Entwurf · Stand 12.11.2026</span>
+</div>
+<iframe id="rechner" title="Speicherrechner" src="index.html"></iframe>
+<script>
+const knoepfe = document.querySelectorAll(".wahl button");
+function zeige(btn) {
+  knoepfe.forEach(b => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+  document.getElementById("rechner").src = encodeURI(btn.dataset.datei) + (location.hash || "");
+}
+knoepfe.forEach(b => b.addEventListener("click", () => zeige(b)));
+</script>
+</body>
+</html>
